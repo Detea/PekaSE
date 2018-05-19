@@ -6,13 +6,13 @@ A modern Pekka Kana 2 sprite editor, with the goal to make creating sprites as c
 
 Features include:
 
-    * Play your sprites animations in the editor
+* Play your sprites animations in the editor
     
-    * See changes instantly, if you change the color of your sprite
+* See changes instantly, if you change the color of your sprite
     
-    * Listen to your sprites sounds within the editor
+* Listen to your sprites sounds within the editor
     
-    * and more!
+* and more!
 
 ![Screenshot](https://i.imgur.com/KcXhkxb.png)
 
