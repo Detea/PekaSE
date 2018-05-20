@@ -30,6 +30,7 @@ import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JSeparator;
 import javax.swing.JSpinner;
@@ -205,7 +206,13 @@ public class PekaSEFrame extends JFrame {
 					
 					lastSpritePath = fc.getSelectedFile().getParentFile();
 					
-					loadFile();
+					PK2Sprite sp = new PK2Sprite(fc.getSelectedFile());
+					
+					if (sp.checkVersion()) {
+						loadFile();
+					} else {
+						JOptionPane.showMessageDialog(null, "Only sprites version 1.3 supported!", "Wrong sprite version", JOptionPane.OK_OPTION);
+					}
 					
 					panel_3.repaint();
 				}
@@ -1468,6 +1475,7 @@ public class PekaSEFrame extends JFrame {
 		setTitle("PekaSE - " + currentFile.getAbsolutePath());
 		
 		spriteFile = new PK2Sprite(currentFile);
+		spriteFile.loadFile();
 		
 		textField.setText(spriteFile.ImageFileStr);
 		txtFieldName.setText(spriteFile.getName());

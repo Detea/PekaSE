@@ -12,7 +12,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.ArrayList;
 
 import javax.imageio.ImageIO;
 
@@ -106,29 +105,51 @@ public class PK2Sprite {
 	public PK2Sprite(File file) {
 		filename = file;
 		
-		loadFile(file);
-		loadBufferedImage();
+		//loadFile(file);
+		//loadBufferedImage();
 	}
 	
 	public PK2Sprite() {
 	}
 	
-	public void loadFile(File file) {
+	public boolean checkVersion() {
+		DataInputStream dis;
+		
+		boolean ret = false;
+		
 		try {
-			DataInputStream dis = new DataInputStream(new FileInputStream(file));
+			dis = new DataInputStream(new FileInputStream(filename));
+			
+			char[] version = {'1', '.', '3', '\0'};
+			
+			readAmount(version, dis);
+			
+			if (version[2] == '3') {
+				ret = true;
+			}
+			
+			dis.close();
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		return ret;
+	}
+	
+	public void loadFile() {
+		try {
+			DataInputStream dis = new DataInputStream(new FileInputStream(filename));
 			
 			char[] version = {'1', '.', '3', '\0'};
 			
 			for (int i = 0; i < version.length; i++) {
 				version[i] = (char) dis.readByte();
 			}
-			
+	
 			type = Integer.reverseBytes(dis.readInt());
-			
-			if (version[2] == '2' || version[2] == '1') {
-				imageFile = new char[13];
-				soundFiles = new char[7][13];
-			}
 			
 			for (int i = 0; i < imageFile.length; i++) {
 				imageFile[i] = (char) (dis.readByte() & 0xFF);
@@ -289,7 +310,9 @@ public class PK2Sprite {
 			bonusAlways = dis.readBoolean();
 			swim = dis.readBoolean();
 			
-			ImageFileStr = file.getParentFile().getAbsolutePath() + "\\" + cleanString(imageFile);
+			ImageFileStr = filename.getParentFile().getAbsolutePath() + "\\" + cleanString(imageFile);
+			
+			loadBufferedImage();
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
