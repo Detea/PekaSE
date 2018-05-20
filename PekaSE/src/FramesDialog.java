@@ -49,7 +49,7 @@ public class FramesDialog extends JDialog {
 		    	g.setColor(Color.WHITE);
 				g.setFont(new Font("Arial", Font.BOLD, 14));
 				
-				g.drawString("" + (i + 1), fx + (sprFile.frameWidth / 2), fy + 24);
+				g.drawString("" + (i + 1), (fx + (sprFile.frameWidth / 2)) - 8, fy + 24);
 		    	g.drawImage(sprFile.frameList[i], fx, fy + 24, null);
 		    	
 		    	fx += sprFile.frameWidth + 3;

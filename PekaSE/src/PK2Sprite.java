@@ -16,11 +16,6 @@ import java.nio.ByteOrder;
 import javax.imageio.ImageIO;
 
 public class PK2Sprite {
-	/*
-	 * THIS IS NOT A FULL IMPLEMENTATION OF THE PK2 SPRITE FILE FORMAT!
-	 * It's only partially implemented, because the editor doesn't need to load the whole file.
-	 */
-	
 	public int type;
 	public char[] imageFile = new char[100];
 	public char[][] soundFiles = new char[7][100];
@@ -168,12 +163,6 @@ public class PK2Sprite {
 			}
 			
 			frames = (int) (dis.readByte() & 0xFF);
-			
-			/*
-			 	int[] sequence = new int[ANIMATION_MAX_SEQUENCES];
-				int frames; // amount of frames
-				boolean loop; // wether the animations loops, or not
-			 */
 			
 			for (int i = 0; i < animation.length; i++) {
 				int[] sequence = new int[10];
@@ -643,7 +632,11 @@ public class PK2Sprite {
 		    		fx = frameX;
 		    	}
 		    	
-		    	frameList[i] = result.getSubimage(fx, fy, frameWidth, frameHeight);
+		    	if (fx + frameWidth < 640) {
+		    		if (fy + frameHeight < result.getHeight()) {
+		    			frameList[i] = result.getSubimage(fx, fy, frameWidth, frameHeight);
+		    		}
+		    	}
 		    	
 		    	fx += frameWidth + 3;
 		    }
