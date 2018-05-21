@@ -30,18 +30,18 @@ public class PK2Sprite {
 	
 	int[] sounds = new int[7];
 	
-	int frames; // number of frames
+	int frames = 1; // number of frames
 	
 	public PK2SpriteAnimation[] animation = new PK2SpriteAnimation[20];
 	
 	public int animations; // number of animations
-	public int frameRate;
+	public int frameRate = 1;
 	
 	public int frameX, frameY;
 	
 	public int frameWidth;
 	public int frameHeight;
-	public int frameDistance;
+	public int frameDistance = 0xCCCCCCCC;
 	
 	public char[] name = new char[33];
 	public int width, height;
@@ -99,12 +99,18 @@ public class PK2Sprite {
 	
 	public PK2Sprite(File file) {
 		filename = file;
-		
+
 		//loadFile(file);
 		//loadBufferedImage();
 	}
 	
 	public PK2Sprite() {
+		byte[] sq = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+		for (int i = 0; i < animation.length; i++) {
+			animation[i] = new PK2SpriteAnimation(sq, 0, false);
+		}
+		
+		color = 255;
 	}
 	
 	public boolean checkVersion() {
@@ -165,12 +171,12 @@ public class PK2Sprite {
 			frames = (int) (dis.readByte() & 0xFF);
 			
 			for (int i = 0; i < animation.length; i++) {
-				int[] sequence = new int[10];
+				byte[] sequence = new byte[10];
 				int frames = 0;
 				boolean loop = false;
 				
 				for (int j = 0; j < sequence.length; j++) {
-					sequence[j] = (int) (dis.readByte() & 0xFF);
+					sequence[j] = dis.readByte();
 				}
 				
 				frames = (int) (dis.readByte() & 0xFF);
@@ -351,13 +357,7 @@ public class PK2Sprite {
 			
 			dis.writeByte(frames);
 			
-			/*
-			 	int[] sequence = new int[ANIMATION_MAX_SEQUENCES];
-				int frames; // amount of frames
-				boolean loop; // wether the animations loops, or not
-			 */
-			
-			for (int i = 0; i < animation.length; i++) {
+			for (int i = 0; i < 10; i++) {
 				for (int j = 0; j < animation[i].sequence.length; j++) {
 					dis.writeByte(animation[i].sequence[j]);
 				}
@@ -366,10 +366,19 @@ public class PK2Sprite {
 				dis.writeBoolean(animation[i].loop);
 			}
 			
+			for (int i = 0; i < 10; i++) {
+				for (int j = 0; j < 10; j++) {
+					dis.writeByte(0);
+				}
+				
+				dis.writeByte(0);
+				dis.writeBoolean(false);
+			}
+			
 			dis.writeByte(animations);
 			dis.writeByte(frameRate);
 			
-			dis.writeByte(0xCC); //Padding? not documented, though
+			dis.writeByte(0xCC);
 			
 			dis.writeInt(Integer.reverseBytes(frameX));
 			dis.writeInt(Integer.reverseBytes(frameY));

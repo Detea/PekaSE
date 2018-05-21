@@ -12,6 +12,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import javax.imageio.ImageIO;
 import javax.sound.sampled.AudioInputStream;
@@ -40,6 +41,8 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.border.EmptyBorder;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.filechooser.FileFilter;
 
 public class PekaSEFrame extends JFrame {
@@ -53,8 +56,9 @@ public class PekaSEFrame extends JFrame {
 	private File currentFile, lastImgPath, lastSpritePath, lastSoundPath;
 	private PK2Sprite spriteFile;
 
-	private JSpinner spinner, spinner_1, spinner_2, spinner_3, spinnerWeight, spinnerEnergy, spinnerDmg, spinnerScore, spinnerLoadDur, spinnerMaxSpeed, spinnerMaxJump, spinnerAtkPause;
+	private JSpinner spinner, spinner_1, spinner_2, spinner_3, spinnerEnergy, spinnerDmg, spinnerScore, spinnerLoadDur, spinnerMaxJump, spinnerAtkPause;
 	private JSpinner spinnerAnimations, spinnerFrameRate, spinnerFrames, spinnerAtk1Dur, spinnerAtk2Dur, spinnerParaFactor, spinnerSndFrq;
+	private JSpinner spinnerMaxSpeed, spinnerWeight, spinnerSprWidth, spinnerSprHeight;
 	
 	private JComboBox comboBoxType, comboBoxColor, comboBoxDmg, comboBoxImmunity;
 	
@@ -206,7 +210,7 @@ public class PekaSEFrame extends JFrame {
 					
 					lastSpritePath = fc.getSelectedFile().getParentFile();
 					
-					PK2Sprite sp = new PK2Sprite(fc.getSelectedFile());
+					PK2Sprite sp = new PK2Sprite(currentFile);
 					
 					if (sp.checkVersion()) {
 						loadFile();
@@ -318,6 +322,12 @@ public class PekaSEFrame extends JFrame {
 					
 					spriteFile.imageFile = fc.getSelectedFile().getName().toCharArray();
 					
+					spriteFile.frameX = (int) spinner.getValue();
+					spriteFile.frameY = (int) spinner_1.getValue();
+					
+					spriteFile.frameWidth = (int) spinner_2.getValue();
+					spriteFile.frameHeight = (int) spinner_3.getValue();
+					
 					spriteFile.loadBufferedImage();
 					
 					panel_3.repaint();
@@ -372,20 +382,20 @@ public class PekaSEFrame extends JFrame {
 		spinner_1.setBounds(67, 76, 47, 20);
 		panel.add(spinner_1);
 		
-		JLabel lblNewLabel = new JLabel("Width:");
-		lblNewLabel.setBounds(142, 51, 46, 14);
+		JLabel lblNewLabel = new JLabel("Frame width:");
+		lblNewLabel.setBounds(142, 51, 67, 14);
 		panel.add(lblNewLabel);
 		
 		spinner_2 = new JSpinner();
-		spinner_2.setBounds(186, 48, 47, 20);
+		spinner_2.setBounds(220, 48, 47, 20);
 		panel.add(spinner_2);
 		
-		JLabel lblHeight = new JLabel("Height:");
-		lblHeight.setBounds(142, 79, 46, 14);
+		JLabel lblHeight = new JLabel("Frame height:");
+		lblHeight.setBounds(142, 79, 67, 14);
 		panel.add(lblHeight);
 		
 		spinner_3 = new JSpinner();
-		spinner_3.setBounds(186, 76, 47, 20);
+		spinner_3.setBounds(220, 76, 47, 20);
 		panel.add(spinner_3);
 		
 		JLabel lblColor = new JLabel("Color:");
@@ -401,7 +411,10 @@ public class PekaSEFrame extends JFrame {
 						
 						spriteFile.loadBufferedImage();
 						
+						test = spriteFile.frameList[0];
+						
 						panel_3.repaint();
+						panel_4.repaint();
 					}
 				}
 			}
@@ -436,17 +449,12 @@ public class PekaSEFrame extends JFrame {
 		lblWeight.setBounds(365, 243, 46, 14);
 		panel.add(lblWeight);
 		
-		spinnerWeight = new JSpinner();
-		spinnerWeight.setModel(new SpinnerNumberModel(new Double(0), null, null, new Double(1)));
-		spinnerWeight.setBounds(421, 240, 56, 20);
-		panel.add(spinnerWeight);
-		
 		JLabel lblEnergy = new JLabel("Energy:");
 		lblEnergy.setBounds(365, 268, 46, 14);
 		panel.add(lblEnergy);
 		
 		spinnerEnergy = new JSpinner();
-		spinnerEnergy.setBounds(421, 265, 56, 20);
+		spinnerEnergy.setBounds(421, 265, 60, 20);
 		panel.add(spinnerEnergy);
 		
 		JLabel lblDamage = new JLabel("Damage:");
@@ -454,7 +462,7 @@ public class PekaSEFrame extends JFrame {
 		panel.add(lblDamage);
 		
 		spinnerDmg = new JSpinner();
-		spinnerDmg.setBounds(421, 290, 56, 20);
+		spinnerDmg.setBounds(421, 290, 60, 20);
 		panel.add(spinnerDmg);
 		
 		JLabel lblScore = new JLabel("Score:");
@@ -462,7 +470,7 @@ public class PekaSEFrame extends JFrame {
 		panel.add(lblScore);
 		
 		spinnerScore = new JSpinner();
-		spinnerScore.setBounds(421, 316, 56, 20);
+		spinnerScore.setBounds(421, 316, 60, 20);
 		panel.add(spinnerScore);
 		
 		JLabel lblMaxSpeed = new JLabel("Max speed:");
@@ -474,13 +482,8 @@ public class PekaSEFrame extends JFrame {
 		panel.add(lblReloadTime);
 		
 		spinnerLoadDur = new JSpinner();
-		spinnerLoadDur.setBounds(589, 290, 60, 20);
+		spinnerLoadDur.setBounds(590, 290, 60, 20);
 		panel.add(spinnerLoadDur);
-		
-		spinnerMaxSpeed = new JSpinner();
-		spinnerMaxSpeed.setModel(new SpinnerNumberModel(new Double(0), null, null, new Double(1)));
-		spinnerMaxSpeed.setBounds(590, 240, 60, 20);
-		panel.add(spinnerMaxSpeed);
 		
 		chckbxEnemy = new JCheckBox("Enemy");
 		chckbxEnemy.addActionListener(new ActionListener() {
@@ -659,7 +662,7 @@ public class PekaSEFrame extends JFrame {
 						e.printStackTrace();
 					}
 					
-					if (spriteFile.frameList != null && animate) {
+					if (spriteFile.frameList != null && animate && spriteFile.frames >= 1) {
 						int ani = 0;
 						int a = 0;
 						
@@ -673,10 +676,13 @@ public class PekaSEFrame extends JFrame {
 							}
 						}
 						
+						
 						if (spriteFile.animation[index].sequence[i] > 0) {
-							j  = spriteFile.animation[index].sequence[i];
+							j = spriteFile.animation[index].sequence[i];
 
-							test = spriteFile.frameList[j - 1];
+							if (j - 1 < spriteFile.frames) {
+								test = spriteFile.frameList[j - 1];
+							}
 							
 							if (i + 1 > ani - 1) {
 								if (loop) {
@@ -706,6 +712,12 @@ public class PekaSEFrame extends JFrame {
 		panel_1.add(lblAnimations);
 		
 		spinnerFrameRate = new JSpinner();
+		spinnerFrameRate.setModel(new SpinnerNumberModel(new Integer(1), new Integer(1), null, new Integer(1)));
+		spinnerFrameRate.addChangeListener(new ChangeListener() {
+			public void stateChanged(ChangeEvent e) {
+				spriteFile.frameRate = (int) spinnerFrameRate.getValue();
+			}
+		});
 		spinnerFrameRate.setBounds(72, 15, 50, 20);
 		panel_1.add(spinnerFrameRate);
 		
@@ -922,6 +934,20 @@ public class PekaSEFrame extends JFrame {
 		panel_1.add(lblFrames);
 		
 		spinnerFrames = new JSpinner();
+		spinnerFrames.setModel(new SpinnerNumberModel(new Integer(1), new Integer(1), null, new Integer(1)));
+		spinnerFrames.addChangeListener(new ChangeListener() {
+			public void stateChanged(ChangeEvent e) {
+				spriteFile.frames = (int) spinnerFrames.getValue();
+				
+				if (spriteFile.image != null) {
+					spriteFile.loadBufferedImage();
+					
+					test = spriteFile.frameList[0];
+					
+					panel_4.repaint();
+				}
+			}
+		});
 		spinnerFrames.setBounds(72, 42, 50, 20);
 		panel_1.add(spinnerFrames);
 		
@@ -989,8 +1015,34 @@ public class PekaSEFrame extends JFrame {
 		panel.add(label_10);
 		
 		spinnerAtkPause = new JSpinner();
-		spinnerAtkPause.setBounds(589, 316, 60, 20);
+		spinnerAtkPause.setBounds(590, 316, 60, 20);
 		panel.add(spinnerAtkPause);
+		
+		spinnerMaxSpeed = new JSpinner();
+		spinnerMaxSpeed.setModel(new SpinnerNumberModel(new Double(0), null, null, new Double(1)));
+		spinnerMaxSpeed.setBounds(590, 240, 60, 20);
+		panel.add(spinnerMaxSpeed);
+		
+		spinnerWeight = new JSpinner();
+		spinnerWeight.setModel(new SpinnerNumberModel(new Double(0), null, null, new Double(1)));
+		spinnerWeight.setBounds(421, 240, 60, 20);
+		panel.add(spinnerWeight);
+		
+		JLabel lblSpriteWidth = new JLabel("Sprite width:");
+		lblSpriteWidth.setBounds(295, 51, 67, 14);
+		panel.add(lblSpriteWidth);
+		
+		JLabel lblSpriteHeight = new JLabel("Sprite height:");
+		lblSpriteHeight.setBounds(295, 79, 67, 14);
+		panel.add(lblSpriteHeight);
+		
+		spinnerSprWidth = new JSpinner();
+		spinnerSprWidth.setBounds(365, 48, 46, 20);
+		panel.add(spinnerSprWidth);
+		
+		spinnerSprHeight = new JSpinner();
+		spinnerSprHeight.setBounds(365, 76, 46, 20);
+		panel.add(spinnerSprHeight);
 		
 		JButton btnBrowse_2 = new JButton("Browse");
 		btnBrowse_2.addActionListener(new ActionListener() {
@@ -1485,6 +1537,9 @@ public class PekaSEFrame extends JFrame {
 		spinner_2.setValue(spriteFile.width);
 		spinner_3.setValue(spriteFile.height);
 		
+		spinnerSprWidth.setValue(spriteFile.width);
+		spinnerSprHeight.setValue(spriteFile.height);
+		
 		comboBoxType.setSelectedIndex(spriteFile.type - 1);
 		
 		int index = 0;
@@ -1783,6 +1838,9 @@ public class PekaSEFrame extends JFrame {
 		spriteFile.frameWidth = (int) spinner_2.getValue();
 		spriteFile.frameHeight = (int) spinner_3.getValue();
 		
+		spriteFile.width = (int) spinnerSprWidth.getValue();
+		spriteFile.height = (int) spinnerSprHeight.getValue();
+		
 		spriteFile.name = new char[32];
 		
 		int len = 32;
@@ -1854,38 +1912,63 @@ public class PekaSEFrame extends JFrame {
 		txtSnd.add(textFieldSndAtk2);
 		txtSnd.add(textFieldAtkRnd);
 		
-		for (int i = 0; i < txtSnd.size(); i++) {
-			tmp1 = txtSnd.get(i).getText().split("\\\\");
-			tmp2 = tmp1[tmp1.length - 1];
-			
-			for (int j = 0; j < tmp2.length(); j++) {
-				spriteFile.soundFiles[i][j] = tmp2.charAt(j);
+		for (int i = 0; i < spriteFile.soundFiles.length; i++) {
+			for (int j = 0; j < spriteFile.soundFiles[0].length; j++) {
+				spriteFile.soundFiles[i][j] = 0xCC;
+			}
+		}
+		
+		for (int i = 0; i < 7; i++) {
+			if (i < txtSnd.size()) {
+				tmp1 = txtSnd.get(i).getText().split("\\\\");
+				tmp2 = tmp1[tmp1.length - 1];
+				
+				for (int j = 0; j < tmp2.length(); j++) {
+					spriteFile.soundFiles[i][j] = tmp2.charAt(j);
+				}
 			}
 			
 			spriteFile.soundFiles[i][tmp2.length()] = 0x0;
 		}
 		
+		// Hacky, but I just got fed up with this bullshit
+		
 		int fr = 0;
-		for (int j = 0; j < txtfd.size(); j++) {
-			String[] s = txtfd.get(j).getText().split(",");
+		String[] s;
+		
+		byte[] a = new byte[10];
+		PK2SpriteAnimation[] b = new PK2SpriteAnimation[spriteFile.animation.length];
+		
+		for (int j = 0; j < 10; j++) {
+			a[j] = 0;
+		}
+		
+		for (int i = 0; i < b.length; i++) {
+			b[i] = new PK2SpriteAnimation(a, 0, false);
+		}
+		
+		for (int i = 0; i < txtfd.size(); i++) {
+			s = txtfd.get(i).getText().split(",");
 			
-			for (int i = 0; i < 10; i++) {
-				
-				spriteFile.animation[j].sequence[i] = Integer.parseInt(s[i].trim());
-				
-				if (spriteFile.animation[j].sequence[i] != 0) {
+			for (int j = 0; j < 10; j++) {
+				if (Byte.parseByte(s[j]) != 0) {
+					a[j] = Byte.parseByte(s[j]);
+					
 					fr++;
+				} else {
+					a[j] = 0;
 				}
 			}
+		
+			b[i].sequence = Arrays.copyOf(a, 10);
 			
-			spriteFile.animation[j].frames = fr;
+			b[i].frames = fr;
+			b[i].loop = chbx.get(i).isSelected();
 			
 			fr = 0;
 		}
 		
-		for (int i = 0; i < chbx.size(); i++) {
-			spriteFile.animation[i].loop = chbx.get(i).isSelected();
-		}
+		spriteFile.animation = Arrays.copyOf(b, spriteFile.animation.length);
 		
 		spriteFile.transformationSprite = new char[100];
 		
@@ -2023,9 +2106,9 @@ public class PekaSEFrame extends JFrame {
 			spriteFile.destruction = comboBoxDestruct2.getSelectedIndex();
 		}
 		
-		currentFile = file;
-		
 		spriteFile.saveFile(file);
+		
+		currentFile = file;
 	}
 	
 	private void playAnimation(int index) {
@@ -2039,8 +2122,18 @@ public class PekaSEFrame extends JFrame {
 			
 			String[] s = txtfd.get(index).getText().split(",");
 			
+			int fr = 0;
+			
 			for (int i = 0; i < s.length; i++) {
-				spriteFile.animation[index].sequence[i] = Integer.parseInt(s[i].trim());
+				if (spriteFile.animation[index].sequence[i] != 0) {
+					fr++;
+				}
+			}
+			
+			spriteFile.animation[index].frames = fr;
+			
+			for (int i = 0; i < s.length; i++) {
+				spriteFile.animation[index].sequence[i] = Byte.parseByte(s[i].trim());
 			}
 		}
 	}
@@ -2049,14 +2142,17 @@ public class PekaSEFrame extends JFrame {
 		setTitle("PekaSE - unnamed");
 		
 		spriteFile = new PK2Sprite();
-		
+	
 		textField.setText("");
 		txtFieldName.setText("");
 		
 		spinner.setValue(1);
 		spinner_1.setValue(1);
-		spinner_2.setValue(0);
-		spinner_3.setValue(0);
+		spinner_2.setValue(1);
+		spinner_3.setValue(1);
+		
+		spinnerSprWidth.setValue(1);
+		spinnerSprHeight.setValue(1);
 		
 		comboBoxType.setSelectedIndex(0);
 
@@ -2078,21 +2174,19 @@ public class PekaSEFrame extends JFrame {
 
 		comboBoxDmg.setSelectedIndex(0);
 		comboBoxImmunity.setSelectedIndex(0);
-
-		spinnerWeight.setValue(0);
 		spinnerEnergy.setValue(0);
 		spinnerDmg.setValue(0);
 		spinnerScore.setValue(0);
-
-		spinnerMaxSpeed.setValue(0);
 		spinnerMaxJump.setValue(0);
+		spinnerWeight.setValue(0d);
+		spinnerMaxSpeed.setValue(0d);
 
 		spinnerLoadDur.setValue(0);
 
 		spinnerAtkPause.setValue(0);
 
-		spinnerFrameRate.setValue(0);
-		spinnerFrames.setValue(0);
+		spinnerFrameRate.setValue(1);
+		spinnerFrames.setValue(1);
 		spinnerAnimations.setValue(0);
 
 		spinnerAtk1Dur.setValue(0);
