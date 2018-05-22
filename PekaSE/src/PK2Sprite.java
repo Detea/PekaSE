@@ -592,20 +592,11 @@ public class PK2Sprite {
 			frameList = new BufferedImage[frames];
 			
 			BufferedImage image = ImageIO.read(new File(Settings.SPRITE_PATH + cleanString(imageFile)));
-			
 			BufferedImage result = new BufferedImage(image.getWidth(), image.getHeight(), BufferedImage.TYPE_BYTE_INDEXED, (IndexColorModel) image.getColorModel());
-			
-		    // make color transparent
-		    int oldRGB = new Color(148, 209, 222).getRGB();
-		    int oldRGB2 = new Color(128, 205, 214).getRGB();
-		    int oldRGB3 = new Color(155, 232, 224).getRGB();
-		    int oldRGB4 = new Color(114, 200, 228).getRGB();
-		 
-		    byte[] data = null;
+
+		    byte[] data = ((DataBufferByte) image.getRaster().getDataBuffer()).getData();
 		    
 		    if (color != 255) {
-		    	data = ((DataBufferByte) image.getRaster().getDataBuffer()).getData();
-		    	
 		    	int col;
 		    	
 		    	for (int i = 0; i < image.getWidth(); i++) {
@@ -613,7 +604,7 @@ public class PK2Sprite {
 		    			if ((col = data[i + j * image.getWidth()]) != 255) {
 		    				col &= 0xFF;
 		    				
-		    				if (image.getColorModel().getRGB(col) != oldRGB && image.getColorModel().getRGB(col) != oldRGB2 && image.getColorModel().getRGB(col) != oldRGB3 && image.getColorModel().getRGB(col) != oldRGB4) {
+		    				if (image.getRGB(i, j) != image.getColorModel().getRGB(255)) {
 			    				col %= 32;
 			    				col += color;
 			    				
@@ -628,7 +619,7 @@ public class PK2Sprite {
 		    
 		    for (int i = 0; i < image.getWidth(); i++) {
 		    	for (int j = 0; j < image.getHeight(); j++) {
-		    		if (image.getRGB(i, j) != oldRGB && image.getRGB(i, j) != oldRGB2 && image.getRGB(i, j) != oldRGB3 && image.getRGB(i, j) != oldRGB4) {
+		    		if (image.getRGB(i, j) != image.getColorModel().getRGB(255)) {
 		    			result.setRGB(i, j, image.getRGB(i, j));
 		    		}
 		    	}
