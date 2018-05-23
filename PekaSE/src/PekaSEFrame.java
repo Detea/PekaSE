@@ -692,7 +692,7 @@ public class PekaSEFrame extends JFrame {
 								i++;
 							}
 							
-							sleep = (60 / spriteFile.frameRate) * 12;
+							sleep = (85 / spriteFile.frameRate) * 10;
 
 							panel_4.repaint();
 						}
