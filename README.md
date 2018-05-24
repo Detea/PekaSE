@@ -6,7 +6,6 @@ A modern Pekka Kana 2 sprite editor, with the goal to make creating sprites as c
 
 Features include:
 
-<<<<<<< HEAD
     * Play your sprites animations in the editor
 	
     * See changes instantly, if you change the color of your sprite
