@@ -13,7 +13,7 @@ Features include:
     * Listen to your sprites sounds within the editor
 	
     * and more!
-=======
+---
 * Play your sprites animations in the editor
     
 * See changes instantly, if you change the color of your sprite
@@ -21,7 +21,7 @@ Features include:
 * Listen to your sprites sounds within the editor
     
 * and more!
->>>>>>> 6034fb5839bd2e7c4207a7b3ef6d36222a4a168b
+
 
 ![Screenshot](https://i.imgur.com/KcXhkxb.png)
 
