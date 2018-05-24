@@ -4,16 +4,6 @@ Pekka Kana 2 Sprite Editor
 
 A modern Pekka Kana 2 sprite editor, with the goal to make creating sprites as convenient as possible.
 
-Features include:
-
-    * Play your sprites animations in the editor
-	
-    * See changes instantly, if you change the color of your sprite
-	
-    * Listen to your sprites sounds within the editor
-	
-    * and more!
----
 * Play your sprites animations in the editor
     
 * See changes instantly, if you change the color of your sprite
