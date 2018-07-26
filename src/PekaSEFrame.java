@@ -11,8 +11,10 @@ import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 
 import javax.imageio.ImageIO;
 import javax.sound.sampled.AudioInputStream;
@@ -53,6 +55,8 @@ public class PekaSEFrame extends JFrame {
 	private JTextField textFieldAmmoSpr1;
 	private JTextField textFieldAmmoSpr2;
 	
+	private JLabel lblStatus;
+	
 	private File currentFile, lastImgPath, lastSpritePath, lastSoundPath;
 	private PK2Sprite spriteFile;
 
@@ -74,6 +78,10 @@ public class PekaSEFrame extends JFrame {
 	private ArrayList<JCheckBox> chbx = new ArrayList<JCheckBox>();
 	
 	private File lastFile;
+	
+	Calendar cal;
+	SimpleDateFormat sdf;
+	
 	
 	private JTextField textFieldSndKnockOut;
 	private JTextField textFieldSndDmg;
@@ -121,7 +129,6 @@ public class PekaSEFrame extends JFrame {
 	private int sprScaleHeight2, sprScaleWidth2;
 	
 	public PekaSEFrame() {
-		setResizable(false);
 		try {
 			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 		} catch (ClassNotFoundException | InstantiationException | IllegalAccessException
@@ -131,6 +138,11 @@ public class PekaSEFrame extends JFrame {
 		}
 		
 		spriteFile = new PK2Sprite();
+		
+		setResizable(false);
+		
+		sdf = new SimpleDateFormat("HH:mm:ss");
+		
 		
 		panel_3 = new JPanel() {
 			public void paintComponent(Graphics g) {
@@ -224,7 +236,63 @@ public class PekaSEFrame extends JFrame {
 		});
 		mnFile.add(mntmOpen);
 		
-		JMenuItem mntmSaveAs = new JMenuItem("Save");
+		JMenuItem miSave = new JMenuItem("Save");
+		miSave.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				if (spriteFile == null) {
+					JFileChooser fc = new JFileChooser("Save sprite...");
+					
+					fc.setFileFilter(new FileFilter() {
+
+						@Override
+						public boolean accept(File f) {
+							return f.isDirectory() | f.getName().endsWith("spr");
+						}
+
+						@Override
+						public String getDescription() {
+							return "Pekka Kana 2 Sprite file (*.spr)";
+						}
+						
+					});
+					
+					fc.setSelectedFile(lastFile);
+					fc.setCurrentDirectory(lastSpritePath);
+					
+					int res = fc.showSaveDialog(null);
+					
+					if (res == JFileChooser.APPROVE_OPTION) {
+						File f = fc.getSelectedFile();
+						
+						if (!f.getName().endsWith("spr")) {
+							f = new File(fc.getSelectedFile().getAbsolutePath() + ".spr");
+						}
+						
+						
+						if (saveFile(f)) {
+							setFrameTitle("PekaSE - " + currentFile.getAbsolutePath());
+							
+							lastFile = fc.getSelectedFile();
+							lastSpritePath = fc.getSelectedFile().getParentFile();
+							
+							cal = Calendar.getInstance();
+							
+							lblStatus.setText("File saved! (" + sdf.format(cal.getTime()) + ")");
+						}
+					}
+				} else {
+					if (saveFile(currentFile))
+						cal = Calendar.getInstance();
+						
+			        	lblStatus.setText("File saved! (" + sdf.format(cal.getTime()) + ")");
+				}
+			}
+			
+		});
+		
+		JMenuItem mntmSaveAs = new JMenuItem("Save as...");
 		mntmSaveAs.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				JFileChooser fc = new JFileChooser("Save sprite...");
@@ -243,7 +311,7 @@ public class PekaSEFrame extends JFrame {
 					
 				});
 				
-				fc.setSelectedFile(lastFile);
+				fc.setSelectedFile(currentFile);
 				fc.setCurrentDirectory(lastSpritePath);
 				
 				int res = fc.showSaveDialog(null);
@@ -255,16 +323,23 @@ public class PekaSEFrame extends JFrame {
 						f = new File(fc.getSelectedFile().getAbsolutePath() + ".spr");
 					}
 					
-					saveFile(f);
-					
-					setFrameTitle("PekaSE - " + currentFile.getAbsolutePath());
-					
-					lastFile = fc.getSelectedFile();
-					lastSpritePath = fc.getSelectedFile().getParentFile();
+					if (saveFile(f)) {
+						setFrameTitle("PekaSE - " + currentFile.getAbsolutePath());
+						
+						lastFile = fc.getSelectedFile();
+						lastSpritePath = fc.getSelectedFile().getParentFile();
+						
+						cal = Calendar.getInstance();
+						
+						lblStatus.setText("File saved! (" + sdf.format(cal.getTime()) + ")");
+					}
 				}
 			}
 		});
+		
+		mnFile.add(miSave);
 		mnFile.add(mntmSaveAs);
+		
 		contentPane = new JPanel();
 		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
 		contentPane.setLayout(new BorderLayout(0, 0));
@@ -1058,8 +1133,6 @@ public class PekaSEFrame extends JFrame {
 			public void actionPerformed(ActionEvent arg0) {
 				spriteFile.ImageFileStr = Settings.BASE_PATH + "\\" + textField.getText();
 				
-				System.out.println(spriteFile.ImageFileStr);
-				
 				spriteFile.imageFile = textField.getText().toCharArray();
 				
 				spriteFile.frameX = (int) spinner.getValue();
@@ -1543,6 +1616,13 @@ public class PekaSEFrame extends JFrame {
 		button_8.setBounds(337, 78, 89, 23);
 		panel_5.add(button_8);
 		
+		JPanel panel_6 = new JPanel();
+		contentPane.add(panel_6, BorderLayout.SOUTH);
+		panel_6.setLayout(new BorderLayout(0, 0));
+		
+		lblStatus = new JLabel("Created a new file!");
+		panel_6.add(lblStatus);
+		
 		Image img = null;
 		try {
 			img = ImageIO.read(getClass().getResource("/pekase.png"));
@@ -1556,318 +1636,323 @@ public class PekaSEFrame extends JFrame {
 	}
 	
 	private void loadFile() {
-		setTitle("PekaSE - " + currentFile.getAbsolutePath());
-		
 		spriteFile = new PK2Sprite(currentFile);
-		spriteFile.loadFile();
 		
-		String pstr = "";
-		File ft = new File(new File(spriteFile.ImageFileStr).getParent() + "\\" + cleanString(spriteFile.imageFile)); // Oh nooo.... :( It works, though!
-		
-		if (ft.exists()) {
-			pstr = new File(spriteFile.ImageFileStr).getParentFile().getName() + "\\" + cleanString(spriteFile.imageFile);
-		} else {
-			pstr = "sprites\\" + cleanString(spriteFile.imageFile);
-		}
-		
-		textField.setText(pstr);
-		txtFieldName.setText(spriteFile.getName());
-		
-		spinner.setValue(spriteFile.frameX);
-		spinner_1.setValue(spriteFile.frameY);
-		spinner_2.setValue(spriteFile.width);
-		spinner_3.setValue(spriteFile.height);
-		
-		spinnerSprWidth.setValue(spriteFile.width);
-		spinnerSprHeight.setValue(spriteFile.height);
-		
-		comboBoxType.setSelectedIndex(spriteFile.type - 1);
-		
-		int index = 0;
-		
-		for (int i = 0; i < colors.length; i++) {
-			if (spriteFile.color == colors[i]) {
-				index = i;
-				
-				break;
-			}
-		}
+		if (spriteFile.loadFile()) {
+			setTitle("PekaSE - " + currentFile.getAbsolutePath());
+			
+			String pstr = "";
+			File ft = new File(new File(spriteFile.ImageFileStr).getParent() + "\\" + cleanString(spriteFile.imageFile)); // Oh nooo.... :( It works, though!
 
-		comboBoxColor.setSelectedIndex(index);
-		
-		comboBoxDmg.setSelectedIndex(spriteFile.damageType);
-		comboBoxImmunity.setSelectedIndex(spriteFile.immunity);
-		
-		chckbxObstacle.setSelected(spriteFile.obstacle);
-
-		spinner.setValue(spriteFile.frameX);
-		spinner_1.setValue(spriteFile.frameY);
-		spinner_2.setValue(spriteFile.frameWidth);
-		spinner_3.setValue(spriteFile.frameHeight);
-
-		txtFieldName.setText(spriteFile.getName());
-
-		String st = "";
-		
-		if (spriteFile.atkSprite1[0] != 0) {
-			if (new File(currentFile.getParentFile().getAbsolutePath() + "\\" + cleanString(spriteFile.atkSprite1)).exists()) {
-				st = currentFile.getParentFile().getName() + "\\" + cleanString(spriteFile.atkSprite1);
+			if (ft.exists()) {
+				pstr = new File(spriteFile.ImageFileStr).getParentFile().getName() + "\\" + cleanString(spriteFile.imageFile);
 			} else {
-				st = "sprites\\" + cleanString(spriteFile.atkSprite1);
+				pstr = "sprites\\" + cleanString(spriteFile.imageFile);
 			}
-		}
-		
-		textFieldAmmoSpr1.setText(st);
-		
-		st = "";
-		
-		if (spriteFile.atkSprite2[0] != 0) {
-			if (new File(currentFile.getParentFile().getAbsolutePath() + "\\" + cleanString(spriteFile.atkSprite2)).exists()) {
-				st = currentFile.getParentFile().getName() + "\\" + cleanString(spriteFile.atkSprite2);
-			} else {
-				st = "sprites\\" + cleanString(spriteFile.atkSprite2);
-			}
-		}
-		
-		textFieldAmmoSpr2.setText(st);
 
-		comboBoxType.setSelectedIndex(spriteFile.type - 1);
+			textField.setText(pstr);
+			txtFieldName.setText(spriteFile.getName());
 
-		if (spriteFile.color == 255) {
-			comboBoxColor.setSelectedIndex(0);
-		} else {
+			spinner.setValue(spriteFile.frameX);
+			spinner_1.setValue(spriteFile.frameY);
+			spinner_2.setValue(spriteFile.width);
+			spinner_3.setValue(spriteFile.height);
+
+			spinnerSprWidth.setValue(spriteFile.width);
+			spinnerSprHeight.setValue(spriteFile.height);
+
+			comboBoxType.setSelectedIndex(spriteFile.type - 1);
+
+			int index = 0;
+
 			for (int i = 0; i < colors.length; i++) {
-				if (colors[i] == spriteFile.color) {
-					comboBoxColor.setSelectedIndex(i);
+				if (spriteFile.color == colors[i]) {
+					index = i;
 
 					break;
 				}
 			}
-		}
 
-		comboBoxDmg.setSelectedIndex(spriteFile.damageType);
-		comboBoxImmunity.setSelectedIndex(spriteFile.immunity);
+			comboBoxColor.setSelectedIndex(index);
 
-		spinnerWeight.setValue((double) spriteFile.weight);
-		spinnerEnergy.setValue(spriteFile.energy);
-		spinnerDmg.setValue(spriteFile.damage);
-		spinnerScore.setValue(spriteFile.score);
+			comboBoxDmg.setSelectedIndex(spriteFile.damageType);
+			comboBoxImmunity.setSelectedIndex(spriteFile.immunity);
 
-		spinnerMaxSpeed.setValue((double) spriteFile.maxSpeed);
-		spinnerMaxJump.setValue(spriteFile.maxJump);
+			chckbxObstacle.setSelected(spriteFile.obstacle);
 
-		spinnerLoadDur.setValue(spriteFile.loadingTime);
+			spinner.setValue(spriteFile.frameX);
+			spinner_1.setValue(spriteFile.frameY);
+			spinner_2.setValue(spriteFile.frameWidth);
+			spinner_3.setValue(spriteFile.frameHeight);
 
-		spinnerAtkPause.setValue(spriteFile.atkPause);
+			txtFieldName.setText(spriteFile.getName());
 
-		spinnerFrameRate.setValue(spriteFile.frameRate);
-		spinnerFrames.setValue(spriteFile.frames);
-		spinnerAnimations.setValue(spriteFile.animations);
+			String st = "";
 
-		spinnerAtk1Dur.setValue(spriteFile.attack1Duration);
-		spinnerAtk2Dur.setValue(spriteFile.attack2Duration);
-		
-		chckbxEnemy.setSelected(spriteFile.enemy);
-		chckbxBoss.setSelected(spriteFile.boss);
-		chckbxKey.setSelected(spriteFile.key);
-		chckbxObstacle.setSelected(spriteFile.obstacle);
-		
-		ArrayList<JTextField> sndList = new ArrayList<JTextField>();
-		sndList.add(textFieldSndDmg);
-		sndList.add(textFieldSndKnockOut);
-		sndList.add(textFieldSndAtk1);
-		sndList.add(textFieldSndAtk2);
-		sndList.add(textFieldAtkRnd);
-		
-		st = "";
-		
-		for (int i = 0; i < sndList.size(); i++) {
-			if (spriteFile.soundFiles[i][0] != 0) {
-				if (new File(currentFile.getParentFile().getAbsolutePath() + "\\" + cleanString(spriteFile.soundFiles[i])).exists()) {
-					st = currentFile.getParentFile().getName() + "\\" + cleanString(spriteFile.soundFiles[i]);
+			if (spriteFile.atkSprite1[0] != 0) {
+				if (new File(currentFile.getParentFile().getAbsolutePath() + "\\" + cleanString(spriteFile.atkSprite1)).exists()) {
+					st = currentFile.getParentFile().getName() + "\\" + cleanString(spriteFile.atkSprite1);
 				} else {
-					st = "sprites\\" + cleanString(spriteFile.soundFiles[i]);
+					st = "sprites\\" + cleanString(spriteFile.atkSprite1);
 				}
-				
-				sndList.get(i).setText(st);
 			}
-		}
-		
-		st = "";
-		
-		String stillStr = "";
-		
-		String str = "";
-		for (int i = 0; i < 9; i++) {
-			str = "";
-			
-			for (int j = 0; j < spriteFile.animation[i].sequence.length; j++) {
-				str += spriteFile.animation[i].sequence[j] + ",";
+
+			textFieldAmmoSpr1.setText(st);
+
+			st = "";
+
+			if (spriteFile.atkSprite2[0] != 0) {
+				if (new File(currentFile.getParentFile().getAbsolutePath() + "\\" + cleanString(spriteFile.atkSprite2)).exists()) {
+					st = currentFile.getParentFile().getName() + "\\" + cleanString(spriteFile.atkSprite2);
+				} else {
+					st = "sprites\\" + cleanString(spriteFile.atkSprite2);
+				}
 			}
-			
-			txtfd.get(i).setText(str.substring(0, str.length() - 1));
-			
-			chbx.get(i).setSelected(spriteFile.animation[i].loop);
-		}
-		
-		st = "";
-		
-		if (spriteFile.transformationSprite[0] != 0) {
-			if (new File(currentFile.getParentFile().getAbsolutePath() + "\\" + cleanString(spriteFile.transformationSprite)).exists()) {
-				st = currentFile.getParentFile().getName() + "\\" + cleanString(spriteFile.transformationSprite);
+
+			textFieldAmmoSpr2.setText(st);
+
+			comboBoxType.setSelectedIndex(spriteFile.type - 1);
+
+			if (spriteFile.color == 255) {
+				comboBoxColor.setSelectedIndex(0);
 			} else {
-				st = "sprites\\" + cleanString(spriteFile.transformationSprite);
+				for (int i = 0; i < colors.length; i++) {
+					if (colors[i] == spriteFile.color) {
+						comboBoxColor.setSelectedIndex(i);
+
+						break;
+					}
+				}
 			}
-		}
-		
-		textFieldTransformSprite.setText(st);
-		
-		st = "";
-		
-		if (spriteFile.bonusSprite[0] != 0) {
-			if (new File(currentFile.getParentFile().getAbsolutePath() + "\\" + cleanString(spriteFile.bonusSprite)).exists()) {
-				st = currentFile.getParentFile().getName() + "\\" + cleanString(spriteFile.bonusSprite);
+
+			comboBoxDmg.setSelectedIndex(spriteFile.damageType);
+			comboBoxImmunity.setSelectedIndex(spriteFile.immunity);
+
+			spinnerWeight.setValue((double) spriteFile.weight);
+			spinnerEnergy.setValue(spriteFile.energy);
+			spinnerDmg.setValue(spriteFile.damage);
+			spinnerScore.setValue(spriteFile.score);
+
+			spinnerMaxSpeed.setValue((double) spriteFile.maxSpeed);
+			spinnerMaxJump.setValue(spriteFile.maxJump);
+
+			spinnerLoadDur.setValue(spriteFile.loadingTime);
+
+			spinnerAtkPause.setValue(spriteFile.atkPause);
+
+			spinnerFrameRate.setValue(spriteFile.frameRate);
+			spinnerFrames.setValue(spriteFile.frames);
+			spinnerAnimations.setValue(spriteFile.animations);
+
+			spinnerAtk1Dur.setValue(spriteFile.attack1Duration);
+			spinnerAtk2Dur.setValue(spriteFile.attack2Duration);
+
+			chckbxEnemy.setSelected(spriteFile.enemy);
+			chckbxBoss.setSelected(spriteFile.boss);
+			chckbxKey.setSelected(spriteFile.key);
+			chckbxObstacle.setSelected(spriteFile.obstacle);
+
+			ArrayList<JTextField> sndList = new ArrayList<JTextField>();
+			sndList.add(textFieldSndDmg);
+			sndList.add(textFieldSndKnockOut);
+			sndList.add(textFieldSndAtk1);
+			sndList.add(textFieldSndAtk2);
+			sndList.add(textFieldAtkRnd);
+
+			st = "";
+
+			for (int i = 0; i < sndList.size(); i++) {
+				if (spriteFile.soundFiles[i][0] != 0) {
+					if (new File(currentFile.getParentFile().getAbsolutePath() + "\\" + cleanString(spriteFile.soundFiles[i])).exists()) {
+						st = currentFile.getParentFile().getName() + "\\" + cleanString(spriteFile.soundFiles[i]);
+					} else {
+						st = "sprites\\" + cleanString(spriteFile.soundFiles[i]);
+					}
+
+					sndList.get(i).setText(st);
+				}
+			}
+
+			st = "";
+
+			String stillStr = "";
+
+			String str = "";
+			for (int i = 0; i < 9; i++) {
+				str = "";
+
+				for (int j = 0; j < spriteFile.animation[i].sequence.length; j++) {
+					str += spriteFile.animation[i].sequence[j] + ",";
+				}
+
+				txtfd.get(i).setText(str.substring(0, str.length() - 1));
+
+				chbx.get(i).setSelected(spriteFile.animation[i].loop);
+			}
+
+			st = "";
+
+			if (spriteFile.transformationSprite[0] != 0) {
+				if (new File(currentFile.getParentFile().getAbsolutePath() + "\\" + cleanString(spriteFile.transformationSprite)).exists()) {
+					st = currentFile.getParentFile().getName() + "\\" + cleanString(spriteFile.transformationSprite);
+				} else {
+					st = "sprites\\" + cleanString(spriteFile.transformationSprite);
+				}
+			}
+
+			textFieldTransformSprite.setText(st);
+
+			st = "";
+
+			if (spriteFile.bonusSprite[0] != 0) {
+				if (new File(currentFile.getParentFile().getAbsolutePath() + "\\" + cleanString(spriteFile.bonusSprite)).exists()) {
+					st = currentFile.getParentFile().getName() + "\\" + cleanString(spriteFile.bonusSprite);
+				} else {
+					st = "sprites\\" + cleanString(spriteFile.bonusSprite);
+				}
+			}
+
+			textFieldBonusSprite.setText(st);
+
+			spinnerSndFrq.setValue(spriteFile.soundFrequency);
+			chckbxRandomFrequency.setSelected(spriteFile.randomFrequency);
+
+			chckbxGlide.setSelected(spriteFile.glide);
+			chckbxShakes.setSelected(spriteFile.shakes);
+			chckbxSwim.setSelected(spriteFile.swim);
+			chckbxTileCheck.setSelected(spriteFile.tileCheck);
+			chckbxWallDown.setSelected(spriteFile.wallDown);
+			chckbxWallUp.setSelected(spriteFile.wallUp);
+			chckbxWallLeft.setSelected(spriteFile.wallLeft);
+			chckbxWallRight.setSelected(spriteFile.wallRight);
+			chckbxAlwaysBonus.setSelected(spriteFile.bonusAlways);
+
+			spinnerParaFactor.setValue(spriteFile.parallaxFactor);
+			spinnerBonus.setValue(spriteFile.bonuses);
+
+			ArrayList<JComboBox> cbAni = new ArrayList<JComboBox>();
+			cbAni.add(comboBoxAi1);
+			cbAni.add(comboBoxAi2);
+			cbAni.add(comboBoxAi3);
+			cbAni.add(comboBoxAi4);
+			cbAni.add(comboBoxAi5);
+			cbAni.add(comboBoxAi6);
+			cbAni.add(comboBoxAi7);
+			cbAni.add(comboBoxAi8);
+			cbAni.add(comboBoxAi9);
+			cbAni.add(comboBoxAi10);
+
+			for (int i = 0; i < spriteFile.AI.length; i++) {
+				if (spriteFile.AI[i] <= 30) {
+					cbAni.get(i).setSelectedIndex(spriteFile.AI[i]);
+				} else if (spriteFile.AI[i] >= 35 && spriteFile.AI[i] <= 40) { 
+					cbAni.get(i).setSelectedIndex(spriteFile.AI[i] - 4);
+				} else if (spriteFile.AI[i] >= 41 && spriteFile.AI[i] <= 67) { 
+					cbAni.get(i).setSelectedIndex(spriteFile.AI[i] - 5);
+				} else if (spriteFile.AI[i] >= 70 && spriteFile.AI[i] <= 81) {
+					cbAni.get(i).setSelectedIndex(spriteFile.AI[i] - 7);
+				} else if (spriteFile.AI[i] == 101) {
+					cbAni.get(i).setSelectedIndex(75);
+				} else if (spriteFile.AI[i] == 102) {
+					cbAni.get(i).setSelectedIndex(76);
+				} else if (spriteFile.AI[i] == 103) {
+					cbAni.get(i).setSelectedIndex(77);
+				} else if (spriteFile.AI[i] == 120) {
+					cbAni.get(i).setSelectedIndex(78);
+				} else if (spriteFile.AI[i] == 121) {
+					cbAni.get(i).setSelectedIndex(79);
+				} else if (spriteFile.AI[i] == 130) {
+					cbAni.get(i).setSelectedIndex(80);
+				} else if (spriteFile.AI[i] == 131) {
+					cbAni.get(i).setSelectedIndex(81);
+				} else if (spriteFile.AI[i] == 132) {
+					cbAni.get(i).setSelectedIndex(82);
+				} else if (spriteFile.AI[i] == 133) {
+					cbAni.get(i).setSelectedIndex(83);
+				} else if (spriteFile.AI[i] == 134) {
+					cbAni.get(i).setSelectedIndex(84);
+				} else if (spriteFile.AI[i] == 135) {
+					cbAni.get(i).setSelectedIndex(85);
+				} else if (spriteFile.AI[i] == 136) {
+					cbAni.get(i).setSelectedIndex(86);
+				} else if (spriteFile.AI[i] == 137) {
+					cbAni.get(i).setSelectedIndex(87);
+				} else if (spriteFile.AI[i] == 138) {
+					cbAni.get(i).setSelectedIndex(88);
+				} else if (spriteFile.AI[i] == 139) {
+					cbAni.get(i).setSelectedIndex(89);
+				} else if (spriteFile.AI[i] == 140) {
+					cbAni.get(i).setSelectedIndex(90);
+				} else if (spriteFile.AI[i] == 201) {
+					cbAni.get(i).setSelectedIndex(91);
+				} else if (spriteFile.AI[i] == 202) {
+					cbAni.get(i).setSelectedIndex(92);
+				} else if (spriteFile.AI[i] == 203) {
+					cbAni.get(i).setSelectedIndex(93);
+				} else if (spriteFile.AI[i] == 204) {
+					cbAni.get(i).setSelectedIndex(94);
+				} else if (spriteFile.AI[i] == 205) {
+					cbAni.get(i).setSelectedIndex(95);
+				} else if (spriteFile.AI[i] == 206) {
+					cbAni.get(i).setSelectedIndex(96);
+				} else if (spriteFile.AI[i] == 207) {
+					cbAni.get(i).setSelectedIndex(97);
+				} else if (spriteFile.AI[i] == 208) {
+					cbAni.get(i).setSelectedIndex(98);
+				} else if (spriteFile.AI[i] == 209) {
+					cbAni.get(i).setSelectedIndex(99);
+				} else if (spriteFile.AI[i] == 210) {
+					cbAni.get(i).setSelectedIndex(100);
+				} else if (spriteFile.AI[i] == 211) {
+					cbAni.get(i).setSelectedIndex(101);
+				} else if (spriteFile.AI[i] == 212) {
+					cbAni.get(i).setSelectedIndex(102);
+				} else if (spriteFile.AI[i] == 213) {
+					cbAni.get(i).setSelectedIndex(103);
+				} else if (spriteFile.AI[i] == 214) {
+					cbAni.get(i).setSelectedIndex(104);
+				} else if (spriteFile.AI[i] == 215) {
+					cbAni.get(i).setSelectedIndex(105);
+				} else if (spriteFile.AI[i] == 216) {
+					cbAni.get(i).setSelectedIndex(106);
+				} else if (spriteFile.AI[i] == 217) {
+					cbAni.get(i).setSelectedIndex(107);
+				} else if (spriteFile.AI[i] == 218) {
+					cbAni.get(i).setSelectedIndex(108);
+				} else if (spriteFile.AI[i] == 219) {
+					cbAni.get(i).setSelectedIndex(109);
+				}
+			}
+
+			if (spriteFile.destruction >= 100) {
+				comboBoxDestruction.setSelectedIndex(1);
+
+				comboBoxDestruct2.setSelectedIndex(spriteFile.destruction - 100);
 			} else {
-				st = "sprites\\" + cleanString(spriteFile.bonusSprite);
+				comboBoxDestruction.setSelectedIndex(0);
+				comboBoxDestruct2.setSelectedIndex(spriteFile.destruction);
 			}
-		}
-		
-		textFieldBonusSprite.setText(st);
-		
-		spinnerSndFrq.setValue(spriteFile.soundFrequency);
-		chckbxRandomFrequency.setSelected(spriteFile.randomFrequency);
-		
-		chckbxGlide.setSelected(spriteFile.glide);
-		chckbxShakes.setSelected(spriteFile.shakes);
-		chckbxSwim.setSelected(spriteFile.swim);
-		chckbxTileCheck.setSelected(spriteFile.tileCheck);
-		chckbxWallDown.setSelected(spriteFile.wallDown);
-		chckbxWallUp.setSelected(spriteFile.wallUp);
-		chckbxWallLeft.setSelected(spriteFile.wallLeft);
-		chckbxWallRight.setSelected(spriteFile.wallRight);
-		chckbxAlwaysBonus.setSelected(spriteFile.bonusAlways);
-		
-		spinnerParaFactor.setValue(spriteFile.parallaxFactor);
-		spinnerBonus.setValue(spriteFile.bonuses);
-	
-		ArrayList<JComboBox> cbAni = new ArrayList<JComboBox>();
-		cbAni.add(comboBoxAi1);
-		cbAni.add(comboBoxAi2);
-		cbAni.add(comboBoxAi3);
-		cbAni.add(comboBoxAi4);
-		cbAni.add(comboBoxAi5);
-		cbAni.add(comboBoxAi6);
-		cbAni.add(comboBoxAi7);
-		cbAni.add(comboBoxAi8);
-		cbAni.add(comboBoxAi9);
-		cbAni.add(comboBoxAi10);
-		
-		for (int i = 0; i < spriteFile.AI.length; i++) {
-			if (spriteFile.AI[i] <= 30) {
-				cbAni.get(i).setSelectedIndex(spriteFile.AI[i]);
-			} else if (spriteFile.AI[i] >= 35 && spriteFile.AI[i] <= 39) { 
-				cbAni.get(i).setSelectedIndex(spriteFile.AI[i] - 4);
-			} else if (spriteFile.AI[i] >= 41 && spriteFile.AI[i] <= 67) { 
-				cbAni.get(i).setSelectedIndex(spriteFile.AI[i] - 5);
-			} else if (spriteFile.AI[i] >= 70 && spriteFile.AI[i] <= 81) {
-				cbAni.get(i).setSelectedIndex(spriteFile.AI[i] - 7);
-			} else if (spriteFile.AI[i] == 101) {
-				cbAni.get(i).setSelectedIndex(75);
-			} else if (spriteFile.AI[i] == 102) {
-				cbAni.get(i).setSelectedIndex(76);
-			} else if (spriteFile.AI[i] == 103) {
-				cbAni.get(i).setSelectedIndex(77);
-			} else if (spriteFile.AI[i] == 120) {
-				cbAni.get(i).setSelectedIndex(78);
-			} else if (spriteFile.AI[i] == 121) {
-				cbAni.get(i).setSelectedIndex(79);
-			} else if (spriteFile.AI[i] == 130) {
-				cbAni.get(i).setSelectedIndex(80);
-			} else if (spriteFile.AI[i] == 131) {
-				cbAni.get(i).setSelectedIndex(81);
-			} else if (spriteFile.AI[i] == 132) {
-				cbAni.get(i).setSelectedIndex(82);
-			} else if (spriteFile.AI[i] == 133) {
-				cbAni.get(i).setSelectedIndex(83);
-			} else if (spriteFile.AI[i] == 134) {
-				cbAni.get(i).setSelectedIndex(84);
-			} else if (spriteFile.AI[i] == 135) {
-				cbAni.get(i).setSelectedIndex(85);
-			} else if (spriteFile.AI[i] == 136) {
-				cbAni.get(i).setSelectedIndex(86);
-			} else if (spriteFile.AI[i] == 137) {
-				cbAni.get(i).setSelectedIndex(87);
-			} else if (spriteFile.AI[i] == 138) {
-				cbAni.get(i).setSelectedIndex(88);
-			} else if (spriteFile.AI[i] == 139) {
-				cbAni.get(i).setSelectedIndex(89);
-			} else if (spriteFile.AI[i] == 140) {
-				cbAni.get(i).setSelectedIndex(90);
-			} else if (spriteFile.AI[i] == 201) {
-				cbAni.get(i).setSelectedIndex(91);
-			} else if (spriteFile.AI[i] == 202) {
-				cbAni.get(i).setSelectedIndex(92);
-			} else if (spriteFile.AI[i] == 203) {
-				cbAni.get(i).setSelectedIndex(93);
-			} else if (spriteFile.AI[i] == 204) {
-				cbAni.get(i).setSelectedIndex(94);
-			} else if (spriteFile.AI[i] == 205) {
-				cbAni.get(i).setSelectedIndex(95);
-			} else if (spriteFile.AI[i] == 206) {
-				cbAni.get(i).setSelectedIndex(96);
-			} else if (spriteFile.AI[i] == 207) {
-				cbAni.get(i).setSelectedIndex(97);
-			} else if (spriteFile.AI[i] == 208) {
-				cbAni.get(i).setSelectedIndex(98);
-			} else if (spriteFile.AI[i] == 209) {
-				cbAni.get(i).setSelectedIndex(99);
-			} else if (spriteFile.AI[i] == 210) {
-				cbAni.get(i).setSelectedIndex(100);
-			} else if (spriteFile.AI[i] == 211) {
-				cbAni.get(i).setSelectedIndex(101);
-			} else if (spriteFile.AI[i] == 212) {
-				cbAni.get(i).setSelectedIndex(102);
-			} else if (spriteFile.AI[i] == 213) {
-				cbAni.get(i).setSelectedIndex(103);
-			} else if (spriteFile.AI[i] == 214) {
-				cbAni.get(i).setSelectedIndex(104);
-			} else if (spriteFile.AI[i] == 215) {
-				cbAni.get(i).setSelectedIndex(105);
-			} else if (spriteFile.AI[i] == 216) {
-				cbAni.get(i).setSelectedIndex(106);
-			} else if (spriteFile.AI[i] == 217) {
-				cbAni.get(i).setSelectedIndex(107);
-			} else if (spriteFile.AI[i] == 218) {
-				cbAni.get(i).setSelectedIndex(108);
-			} else if (spriteFile.AI[i] == 219) {
-				cbAni.get(i).setSelectedIndex(109);
-			}
-		}
-		
-		if (spriteFile.destruction >= 100) {
-			comboBoxDestruction.setSelectedIndex(1);
+
+			test = spriteFile.frameList[0];
+
+			float fsprScaleHeight = (spriteFile.image.getHeight() / 130f) * 65;
+			float fsprScaleWidth = (spriteFile.image.getWidth() / 130f) * 65;
+
+			sprScaleHeight = (int) fsprScaleHeight;
+			sprScaleWidth = (int) fsprScaleWidth;
+
+			fsprScaleHeight = (spriteFile.image.getHeight() / 80f) * 40;
+			fsprScaleWidth = (spriteFile.image.getWidth() / 80f) * 40;
+
+			sprScaleHeight2 = (int) fsprScaleHeight;
+			sprScaleWidth2 = (int) fsprScaleWidth;
+
+			panel_4.repaint();
 			
-			comboBoxDestruct2.setSelectedIndex(spriteFile.destruction - 100);
-		} else {
-			comboBoxDestruction.setSelectedIndex(0);
-			comboBoxDestruct2.setSelectedIndex(spriteFile.destruction);
+			cal = Calendar.getInstance();
+			
+			lblStatus.setText("Loaded file! (" + sdf.format(cal.getTime()) + ")");
 		}
-		
-		test = spriteFile.frameList[0];
-		
-		float fsprScaleHeight = (spriteFile.image.getHeight() / 130f) * 65;
-		float fsprScaleWidth = (spriteFile.image.getWidth() / 130f) * 65;
-		
-		sprScaleHeight = (int) fsprScaleHeight;
-		sprScaleWidth = (int) fsprScaleWidth;
-		
-		fsprScaleHeight = (spriteFile.image.getHeight() / 80f) * 40;
-		fsprScaleWidth = (spriteFile.image.getWidth() / 80f) * 40;
-		
-		sprScaleHeight2 = (int) fsprScaleHeight;
-		sprScaleWidth2 = (int) fsprScaleWidth;
-		
-		panel_4.repaint();
 	}
 	
 	private void playSound(String file) {
@@ -1926,7 +2011,7 @@ public class PekaSEFrame extends JFrame {
 		return "";
 	}
 	
-	private void saveFile(File file) {
+	private boolean saveFile(File file) {
 		spriteFile.imageFile = new char[100];
 		
 		String[] tmp1 = textField.getText().split("\\\\");
@@ -2123,12 +2208,14 @@ public class PekaSEFrame extends JFrame {
 				 spriteFile.AI[i] = in;
 			 } else if (in >= 31 && in <= 40) {
 				 spriteFile.AI[i] = in + 4;
-			 } else if (in >= 41 && in <= 67) {
+			 } else if (in >= 41 && in < 63) {
 				 spriteFile.AI[i] = in + 5;
-			 } else if (in >= 67 && in < 75) {
+			 } else if (in >= 63 && in <= 75) {
 				 spriteFile.AI[i] = in + 7;
 			 }
 			
+			 // Why no switch?
+			 
 			 if (in == 75) {
 				 spriteFile.AI[i] = 101;
 			 } else if (in == 76) {
@@ -2208,9 +2295,11 @@ public class PekaSEFrame extends JFrame {
 			spriteFile.destruction = comboBoxDestruct2.getSelectedIndex();
 		}
 		
-		spriteFile.saveFile(file);
+		boolean ok = spriteFile.saveFile(file);
 		
 		currentFile = file;
+		
+		return ok;
 	}
 	
 	private void playAnimation(int index) {
@@ -2364,6 +2453,8 @@ public class PekaSEFrame extends JFrame {
 		
 		panel_3.repaint();
 		panel_4.repaint();
+		
+		lblStatus.setText("Create a new file!");
 	}
 	
 	private String cleanString(char[] array) {
@@ -2377,7 +2468,7 @@ public class PekaSEFrame extends JFrame {
 				i++;
 			}
 		} catch (Exception ex) {
-			
+			ex.printStackTrace();
 		}
 		
 		return sb.toString();

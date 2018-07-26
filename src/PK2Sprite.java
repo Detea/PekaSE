@@ -14,15 +14,15 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
 import javax.imageio.ImageIO;
+import javax.swing.JOptionPane;
 
 public class PK2Sprite {
 	public int type;
 	public char[] imageFile = new char[100];
 	public char[][] soundFiles = new char[7][100];
 	
-	private char[] version13 = {'1', '.', '3', '\0'};
-	private char[] version12 = {'1', '.', '2', '\0'};
-	private char[] version11 = {'1', '.', '1', '\0'};
+	public char[] version13 = {0x31, 0x2E, 0x33, 0x00};
+	public char[] version = new char[version13.length];
 	
 	public String ImageFileStr = "";
 	
@@ -121,28 +121,39 @@ public class PK2Sprite {
 		try {
 			dis = new DataInputStream(new FileInputStream(filename));
 			
-			char[] version = {'1', '.', '3', '\0'};
-			
 			readAmount(version, dis);
 			
-			if (version[2] == '3') {
-				ret = true;
+			for (int i = 0; i < version.length; i++) {
+				if (version[i] == version13[i]) {
+					ret = true;
+				} else {
+					ret = false;
+					
+					break;
+				}
 			}
 			
 			dis.close();
 		} catch (FileNotFoundException e) {
+			ret = false;
+			
 			e.printStackTrace();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
+			ret = false;
+			
 			e.printStackTrace();
 		}
 		
 		return ret;
 	}
 	
-	public void loadFile() {
+	public boolean loadFile() {
+		DataInputStream dis = null;
+		
+		boolean ok = false;
+		
 		try {
-			DataInputStream dis = new DataInputStream(new FileInputStream(filename));
+			dis = new DataInputStream(new FileInputStream(filename));
 			
 			char[] version = {'1', '.', '3', '\0'};
 			
@@ -310,18 +321,34 @@ public class PK2Sprite {
 			} else {
 				ImageFileStr = Settings.SPRITE_PATH + cleanString(imageFile);
 			}
-			
-			loadBufferedImage();
+		
+			ok = loadBufferedImage();
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
+			
+			JOptionPane.showMessageDialog(null, "Couldn't load file '" + filename.getName() + "'!\n" + e.getMessage(), "Couldn't find file", JOptionPane.ERROR_MESSAGE);
 		} catch (IOException e) {
 			e.printStackTrace();
+			
+			JOptionPane.showMessageDialog(null, "Couldn't load file '" + filename.getName() + "'!\n" + e.getMessage(), "Couldn't load file", JOptionPane.ERROR_MESSAGE);
+		} finally {
+			try {
+				dis.close();
+			} catch (IOException ex) {
+				ex.printStackTrace();
+			}
 		}
+		
+		return ok;
 	}
 	
-	public void saveFile(File file) {
+	public boolean saveFile(File file) {
+		DataOutputStream dis = null;
+		
+		boolean ok = false;
+		
 		try {
-			DataOutputStream dis = new DataOutputStream(new FileOutputStream(file));
+			dis = new DataOutputStream(new FileOutputStream(file));
 			
 			char[] version = {'1', '.', '3', '\0'};
 			
@@ -573,12 +600,31 @@ public class PK2Sprite {
 			dis.writeByte(0xCC);
 			
 			dis.flush();
-			dis.close();
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
+			
+			ok = false;
+			
+			JOptionPane.showMessageDialog(null, "Couldn't save file!\n" + e.getMessage(), "Couldn't save!", JOptionPane.ERROR_MESSAGE);
 		} catch (IOException e) {
 			e.printStackTrace();
+			
+			ok = false;
+			
+			JOptionPane.showMessageDialog(null, "Couldn't save file!\n" + e.getMessage(), "Couldn't save!", JOptionPane.ERROR_MESSAGE);
+		} finally {
+			try {
+				dis.close();
+				
+				ok = true;
+			} catch (IOException e) {
+				ok = false;
+				
+				e.printStackTrace();
+			}
 		}
+		
+		return ok;
 	}
 	
 	private void readAmount(char[] array, DataInputStream dis) throws IOException {
@@ -591,11 +637,17 @@ public class PK2Sprite {
 		return cleanString(name);
 	}
 	
-	public void loadBufferedImage() {
+	public boolean loadBufferedImage() {
+		FileInputStream stream = null;
+		
+		boolean ok = false;
+		
 		try {
 			frameList = new BufferedImage[frames];
 			
-			BufferedImage image = ImageIO.read(new File(ImageFileStr));
+			stream = new FileInputStream(new File(ImageFileStr));
+			
+			BufferedImage image = ImageIO.read(stream);
 			BufferedImage result = new BufferedImage(image.getWidth(), image.getHeight(), BufferedImage.TYPE_BYTE_INDEXED, (IndexColorModel) image.getColorModel());
 
 		    byte[] data = ((DataBufferByte) image.getRaster().getDataBuffer()).getData();
@@ -636,7 +688,7 @@ public class PK2Sprite {
 		    		fx = frameX;
 		    	}
 		    	
-		    	if (fx + frameWidth < 640) {
+		    	if (fx + frameWidth < result.getWidth() && fx + frameWidth < 640) {
 		    		if (fy + frameHeight < result.getHeight()) {
 		    			frameList[i] = result.getSubimage(fx, fy, frameWidth, frameHeight);
 		    		}
@@ -646,9 +698,22 @@ public class PK2Sprite {
 		    }
 			
 		    this.image = result.getSubimage(frameX, frameY, frameWidth, frameHeight);
+		    
+		    ok = true;
 		} catch (IOException e) {
 			e.printStackTrace();
+			
+			JOptionPane.showMessageDialog(null, "Couldn't load image file!\n" + e.getMessage(), "Couldn't load image!", JOptionPane.ERROR_MESSAGE);
+		} finally {
+			 try {
+				stream.close();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
+		
+		return true;
 	}
 	
 	private String cleanString(char[] array) {
