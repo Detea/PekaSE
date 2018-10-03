@@ -11,6 +11,7 @@ import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -46,6 +47,12 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.filechooser.FileFilter;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
+import java.awt.event.InputMethodListener;
+import java.awt.event.InputMethodEvent;
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeEvent;
 
 public class PekaSEFrame extends JFrame {
 
@@ -1121,6 +1128,7 @@ public class PekaSEFrame extends JFrame {
 		panel.add(lblSpriteHeight);
 		
 		spinnerSprWidth = new JSpinner();
+		
 		spinnerSprWidth.setBounds(365, 48, 46, 20);
 		panel.add(spinnerSprWidth);
 		
@@ -1642,7 +1650,7 @@ public class PekaSEFrame extends JFrame {
 			setTitle("PekaSE - " + currentFile.getAbsolutePath());
 			
 			String pstr = "";
-			File ft = new File(new File(spriteFile.ImageFileStr).getParent() + "\\" + cleanString(spriteFile.imageFile)); // Oh nooo.... :( It works, though!
+			File ft = new File(new File(spriteFile.ImageFileStr).getParent() + "\\" + cleanString(spriteFile.imageFile));
 
 			if (ft.exists()) {
 				pstr = new File(spriteFile.ImageFileStr).getParentFile().getName() + "\\" + cleanString(spriteFile.imageFile);
@@ -2020,6 +2028,34 @@ public class PekaSEFrame extends JFrame {
 			spriteFile.imageFile[i] = tmp2.charAt(i);
 		}
 		
+		try {
+			spinner.commitEdit();
+			spinner_1.commitEdit();
+			spinner_2.commitEdit();
+			spinner_3.commitEdit();
+			spinnerSprWidth.commitEdit();
+			spinnerSprHeight.commitEdit();
+			spinnerWeight.commitEdit();
+			spinnerEnergy.commitEdit();
+			spinnerDmg.commitEdit();
+			spinnerScore.commitEdit();
+			spinnerLoadDur.commitEdit();
+			spinnerMaxJump.commitEdit();
+			spinnerAtkPause.commitEdit();
+			spinnerMaxSpeed.commitEdit();
+			spinnerAnimations.commitEdit();
+			spinnerFrameRate.commitEdit();
+			spinnerFrames.commitEdit();
+			spinnerAtk1Dur.commitEdit();
+			spinnerAtk2Dur.commitEdit();
+			spinnerParaFactor.commitEdit();
+			spinnerSndFrq.commitEdit();
+			spinnerBonus.commitEdit();
+		} catch (ParseException e) {
+			e.printStackTrace();
+		}
+		
+		
 		spriteFile.frameX = (int) spinner.getValue();
 		spriteFile.frameY = (int) spinner_1.getValue();
 		spriteFile.frameWidth = (int) spinner_2.getValue();
@@ -2294,9 +2330,9 @@ public class PekaSEFrame extends JFrame {
 		} else {
 			spriteFile.destruction = comboBoxDestruct2.getSelectedIndex();
 		}
-		
+
 		boolean ok = spriteFile.saveFile(file);
-		
+
 		currentFile = file;
 		
 		return ok;
@@ -2333,6 +2369,7 @@ public class PekaSEFrame extends JFrame {
 		setTitle("PekaSE - unnamed");
 		
 		spriteFile = new PK2Sprite();
+		currentFile = null;
 	
 		textField.setText("");
 		txtFieldName.setText("");

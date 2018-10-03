@@ -348,6 +348,10 @@ public class PK2Sprite {
 		boolean ok = false;
 		
 		try {
+			if (file.exists()) {
+				file.delete();
+			}
+			
 			dis = new DataOutputStream(new FileOutputStream(file));
 			
 			char[] version = {'1', '.', '3', '\0'};
@@ -600,6 +604,9 @@ public class PK2Sprite {
 			dis.writeByte(0xCC);
 			
 			dis.flush();
+			dis.close();
+			
+			ok = true;
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 			
@@ -615,8 +622,6 @@ public class PK2Sprite {
 		} finally {
 			try {
 				dis.close();
-				
-				ok = true;
 			} catch (IOException e) {
 				ok = false;
 				
