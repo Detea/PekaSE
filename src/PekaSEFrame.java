@@ -89,7 +89,6 @@ public class PekaSEFrame extends JFrame {
 	Calendar cal;
 	SimpleDateFormat sdf;
 	
-	
 	private JTextField textFieldSndKnockOut;
 	private JTextField textFieldSndDmg;
 	private JTextField textFieldSndAtk1;
@@ -140,7 +139,6 @@ public class PekaSEFrame extends JFrame {
 			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 		} catch (ClassNotFoundException | InstantiationException | IllegalAccessException
 				| UnsupportedLookAndFeelException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		
