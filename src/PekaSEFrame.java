@@ -330,15 +330,19 @@ public class PekaSEFrame extends JFrame {
 						f = new File(fc.getSelectedFile().getAbsolutePath() + ".spr");
 					}
 					
-					if (saveFile(f)) {
-						setFrameTitle("PekaSE - " + currentFile.getAbsolutePath());
-						
-						lastFile = fc.getSelectedFile();
-						lastSpritePath = fc.getSelectedFile().getParentFile();
-						
-						cal = Calendar.getInstance();
-						
-						lblStatus.setText("File saved! (" + sdf.format(cal.getTime()) + ")");
+					if (f.getName().length() < 13) {
+						if (saveFile(f)) {
+							setFrameTitle("PekaSE - " + currentFile.getAbsolutePath());
+							
+							lastFile = fc.getSelectedFile();
+							lastSpritePath = fc.getSelectedFile().getParentFile();
+							
+							cal = Calendar.getInstance();
+							
+							lblStatus.setText("File saved! (" + sdf.format(cal.getTime()) + ")");
+						}
+					} else {
+						JOptionPane.showMessageDialog(null, "Sprite file name, including '.spr', can't exceed 12 characters.", "File name too long", JOptionPane.ERROR_MESSAGE);
 					}
 				}
 			}
@@ -1431,9 +1435,13 @@ public class PekaSEFrame extends JFrame {
 				int res = fc.showOpenDialog(null);
 				
 				if (res == JFileChooser.APPROVE_OPTION) {
-					textFieldTransformSprite.setText(fc.getSelectedFile().getParentFile().getName() + "\\" + fc.getSelectedFile().getName());
-					
-					lastSpritePath = fc.getSelectedFile().getParentFile();
+					if (fc.getSelectedFile().getName().length() < 100) {
+						textFieldTransformSprite.setText(fc.getSelectedFile().getParentFile().getName() + "\\" + fc.getSelectedFile().getName());
+						
+						lastSpritePath = fc.getSelectedFile().getParentFile();
+					} else {
+						JOptionPane.showMessageDialog(null, "Sprite file name, including '.spr', can't exceed 100 characters.", "File name too long", JOptionPane.ERROR_MESSAGE);
+					}
 				}
 			}
 		});
@@ -1615,9 +1623,13 @@ public class PekaSEFrame extends JFrame {
 				int res = fc.showOpenDialog(null);
 				
 				if (res == JFileChooser.APPROVE_OPTION) {
-					textFieldBonusSprite.setText(fc.getSelectedFile().getParentFile().getName() + "\\" + fc.getSelectedFile().getName());
-					
-					lastSpritePath = fc.getSelectedFile().getParentFile();
+					if (fc.getSelectedFile().getName().length() < 100) {
+						textFieldBonusSprite.setText(fc.getSelectedFile().getParentFile().getName() + "\\" + fc.getSelectedFile().getName());
+						
+						lastSpritePath = fc.getSelectedFile().getParentFile();
+					} else {
+						JOptionPane.showMessageDialog(null, "Sprite file name, including '.spr', can't exceed 100 characters.", "File name too long", JOptionPane.ERROR_MESSAGE);
+					}
 				}
 			}
 		});
