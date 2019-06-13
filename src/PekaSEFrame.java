@@ -18,6 +18,7 @@ import java.util.Arrays;
 import java.util.Calendar;
 
 import javax.imageio.ImageIO;
+import javax.print.attribute.standard.JobMessageFromOperator;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
@@ -53,6 +54,9 @@ import java.awt.event.InputMethodListener;
 import java.awt.event.InputMethodEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeEvent;
+import java.awt.Dimension;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
 
 public class PekaSEFrame extends JFrame {
 
@@ -81,6 +85,8 @@ public class PekaSEFrame extends JFrame {
 	
 	private JComboBox comboBoxAi1, comboBoxAi2, comboBoxAi3, comboBoxAi4, comboBoxAi5, comboBoxAi6, comboBoxAi7, comboBoxAi8, comboBoxAi9, comboBoxAi10, comboBoxDestruction, comboBoxDestruct2;
 	
+	private File rawFile;
+	
 	private ArrayList<JTextField> txtfd = new ArrayList<JTextField>();
 	private ArrayList<JCheckBox> chbx = new ArrayList<JCheckBox>();
 	
@@ -88,7 +94,6 @@ public class PekaSEFrame extends JFrame {
 	
 	Calendar cal;
 	SimpleDateFormat sdf;
-	
 	
 	private JTextField textFieldSndKnockOut;
 	private JTextField textFieldSndDmg;
@@ -146,8 +151,6 @@ public class PekaSEFrame extends JFrame {
 		
 		spriteFile = new PK2Sprite();
 		
-		setResizable(false);
-		
 		sdf = new SimpleDateFormat("HH:mm:ss");
 		
 		
@@ -175,7 +178,7 @@ public class PekaSEFrame extends JFrame {
 		
 		setTitle("PekaSE");
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		setBounds(100, 100, 695, 480);
+		setBounds(100, 100, 699, 496);
 		
 		JMenuBar menuBar = new JMenuBar();
 		setJMenuBar(menuBar);
@@ -290,10 +293,11 @@ public class PekaSEFrame extends JFrame {
 						}
 					}
 				} else {
-					if (saveFile(currentFile))
+					if (saveFile(currentFile)) {
 						cal = Calendar.getInstance();
 						
 			        	lblStatus.setText("File saved! (" + sdf.format(cal.getTime()) + ")");
+					}
 				}
 			}
 			
@@ -330,15 +334,19 @@ public class PekaSEFrame extends JFrame {
 						f = new File(fc.getSelectedFile().getAbsolutePath() + ".spr");
 					}
 					
-					if (saveFile(f)) {
-						setFrameTitle("PekaSE - " + currentFile.getAbsolutePath());
-						
-						lastFile = fc.getSelectedFile();
-						lastSpritePath = fc.getSelectedFile().getParentFile();
-						
-						cal = Calendar.getInstance();
-						
-						lblStatus.setText("File saved! (" + sdf.format(cal.getTime()) + ")");
+					if (f.getName().length() < 13) {
+						if (saveFile(f)) {
+							setFrameTitle("PekaSE - " + currentFile.getAbsolutePath());
+							
+							lastFile = fc.getSelectedFile();
+							lastSpritePath = fc.getSelectedFile().getParentFile();
+							
+							cal = Calendar.getInstance();
+							
+							lblStatus.setText("File saved! (" + sdf.format(cal.getTime()) + ")");
+						}
+					} else {
+						JOptionPane.showMessageDialog(null, "Sprite file name, including '.spr', can't exceed 12 characters.", "File name too long", JOptionPane.ERROR_MESSAGE);
 					}
 				}
 			}
@@ -407,6 +415,8 @@ public class PekaSEFrame extends JFrame {
 						pstr = fc.getSelectedFile().getParentFile().getName() + "\\" + fc.getSelectedFile().getName();
 					}
 					
+					rawFile = fc.getSelectedFile();
+					
 					textField.setText(pstr);
 					
 					spriteFile.ImageFileStr = fc.getSelectedFile().getAbsolutePath();
@@ -418,6 +428,28 @@ public class PekaSEFrame extends JFrame {
 					
 					spriteFile.frameWidth = (int) spinner_2.getValue();
 					spriteFile.frameHeight = (int) spinner_3.getValue();
+					
+					BufferedImage img = null;
+					
+					try {
+						img = ImageIO.read(rawFile);
+					} catch (IOException e1) {
+						e1.printStackTrace();
+					}
+					
+					if (spriteFile.frameX > img.getWidth() || spriteFile.frameY > img.getHeight() || spriteFile.frameX + spriteFile.frameWidth > img.getWidth() || spriteFile.frameY + spriteFile.frameHeight > img.getHeight()) {
+						JOptionPane.showMessageDialog(null, "Frame X or Y was out of bounds.\n\tResetting values.");
+					
+						spriteFile.frameX = 0;
+						spriteFile.frameY = 0;
+						spriteFile.frameWidth = 1;
+						spriteFile.frameHeight = 1;
+						
+						spinner.setValue(0);
+						spinner_1.setValue(0);
+						spinner_2.setValue(1);
+						spinner_3.setValue(1);
+					}
 					
 					spriteFile.loadBufferedImage();
 					
@@ -453,40 +485,40 @@ public class PekaSEFrame extends JFrame {
 		panel.add(lblType);
 		
 		comboBoxType = new JComboBox();
-		comboBoxType.setModel(new DefaultComboBoxModel(new String[] {"Character Sprite", "Bonus Item Sprite", "Ammo Sprite", "Teleport Sprite", "Background Sprite"}));
+		comboBoxType.setModel(new DefaultComboBoxModel(new String[] {"Character", "Bonus Item", "Ammo", "Teleport", "Background", "Collectable", "Checkpoint", "Exit"}));
 		comboBoxType.setBounds(51, 240, 170, 20);
 		panel.add(comboBoxType);
 		
 		JLabel lblOffsetX = new JLabel("Position X:");
-		lblOffsetX.setBounds(10, 51, 50, 14);
+		lblOffsetX.setBounds(10, 51, 60, 14);
 		panel.add(lblOffsetX);
 		
 		JLabel lblOffsetY = new JLabel("Position Y:");
-		lblOffsetY.setBounds(10, 79, 50, 14);
+		lblOffsetY.setBounds(10, 79, 60, 14);
 		panel.add(lblOffsetY);
 		
 		spinner = new JSpinner();
-		spinner.setBounds(67, 48, 47, 20);
+		spinner.setBounds(77, 48, 47, 20);
 		panel.add(spinner);
 		
 		spinner_1 = new JSpinner();
-		spinner_1.setBounds(67, 76, 47, 20);
+		spinner_1.setBounds(77, 76, 47, 20);
 		panel.add(spinner_1);
 		
 		JLabel lblNewLabel = new JLabel("Frame width:");
-		lblNewLabel.setBounds(142, 51, 67, 14);
+		lblNewLabel.setBounds(142, 51, 79, 14);
 		panel.add(lblNewLabel);
 		
 		spinner_2 = new JSpinner();
-		spinner_2.setBounds(220, 48, 47, 20);
+		spinner_2.setBounds(219, 48, 47, 20);
 		panel.add(spinner_2);
 		
 		JLabel lblHeight = new JLabel("Frame height:");
-		lblHeight.setBounds(142, 79, 67, 14);
+		lblHeight.setBounds(142, 79, 77, 14);
 		panel.add(lblHeight);
 		
 		spinner_3 = new JSpinner();
-		spinner_3.setBounds(220, 76, 47, 20);
+		spinner_3.setBounds(219, 76, 47, 20);
 		panel.add(spinner_3);
 		
 		JLabel lblColor = new JLabel("Color:");
@@ -1009,7 +1041,7 @@ public class PekaSEFrame extends JFrame {
 		panel_1.add(lblAtkDuration);
 		
 		JLabel lblAttackDuration = new JLabel("Attack 2 duration:");
-		lblAttackDuration.setBounds(10, 146, 87, 14);
+		lblAttackDuration.setBounds(10, 146, 94, 14);
 		panel_1.add(lblAttackDuration);
 		
 		spinnerAtk1Dur = new JSpinner();
@@ -1083,7 +1115,7 @@ public class PekaSEFrame extends JFrame {
 		panel_2.setLayout(null);
 		
 		JLabel lblDamage_1 = new JLabel("Damage:");
-		lblDamage_1.setBounds(91, 44, 43, 14);
+		lblDamage_1.setBounds(91, 44, 52, 14);
 		panel_2.add(lblDamage_1);
 		
 		textFieldSndKnockOut = new JTextField();
@@ -1139,7 +1171,8 @@ public class PekaSEFrame extends JFrame {
 		JButton btnRefresh = new JButton("Refresh");
 		btnRefresh.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
-				spriteFile.ImageFileStr = Settings.BASE_PATH + "\\" + textField.getText();
+				//spriteFile.ImageFileStr = Settings.BASE_PATH + "\\" + textField.getText();
+				spriteFile.ImageFileStr = rawFile.getAbsolutePath();
 				
 				spriteFile.imageFile = textField.getText().toCharArray();
 				
@@ -1149,6 +1182,27 @@ public class PekaSEFrame extends JFrame {
 				spriteFile.frameWidth = (int) spinner_2.getValue();
 				spriteFile.frameHeight = (int) spinner_3.getValue();
 				
+				BufferedImage img = null;
+				try {
+					img = ImageIO.read(rawFile);
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+				
+				if (spriteFile.frameX > img.getWidth() || spriteFile.frameY > img.getHeight() || spriteFile.frameX + spriteFile.frameWidth > img.getWidth() || spriteFile.frameY + spriteFile.frameHeight > img.getHeight()) {
+					JOptionPane.showMessageDialog(null, "Frame X or Y was out of bounds.\n\tResetting values..");
+				
+					spriteFile.frameX = 0;
+					spriteFile.frameY = 0;
+					spriteFile.frameWidth = 1;
+					spriteFile.frameHeight = 1;
+					
+					spinner.setValue(0);
+					spinner_1.setValue(0);
+					spinner_2.setValue(1);
+					spinner_3.setValue(1);
+				}
+				
 				spriteFile.loadBufferedImage();
 				
 				panel_3.repaint();
@@ -1156,6 +1210,15 @@ public class PekaSEFrame extends JFrame {
 		});
 		btnRefresh.setBounds(462, 47, 89, 23);
 		panel.add(btnRefresh);
+		
+		JButton btnSet = new JButton("Set");
+		btnSet.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				ImageDimensionDialog idd = new ImageDimensionDialog(rawFile, spinner, spinner_1, spinner_2, spinner_3, spriteFile, panel_3);
+			}
+		});
+		btnSet.setBounds(462, 75, 89, 23);
+		panel.add(btnSet);
 		
 		JButton btnBrowse_2 = new JButton("Browse");
 		btnBrowse_2.addActionListener(new ActionListener() {
@@ -1431,9 +1494,13 @@ public class PekaSEFrame extends JFrame {
 				int res = fc.showOpenDialog(null);
 				
 				if (res == JFileChooser.APPROVE_OPTION) {
-					textFieldTransformSprite.setText(fc.getSelectedFile().getParentFile().getName() + "\\" + fc.getSelectedFile().getName());
-					
-					lastSpritePath = fc.getSelectedFile().getParentFile();
+					if (fc.getSelectedFile().getName().length() < 100) {
+						textFieldTransformSprite.setText(fc.getSelectedFile().getParentFile().getName() + "\\" + fc.getSelectedFile().getName());
+						
+						lastSpritePath = fc.getSelectedFile().getParentFile();
+					} else {
+						JOptionPane.showMessageDialog(null, "Sprite file name, including '.spr', can't exceed 100 characters.", "File name too long", JOptionPane.ERROR_MESSAGE);
+					}
 				}
 			}
 		});
@@ -1441,11 +1508,11 @@ public class PekaSEFrame extends JFrame {
 		panel_5.add(btnBrowse_3);
 		
 		JLabel lblParallaxFactor = new JLabel("Parallax factor:");
-		lblParallaxFactor.setBounds(10, 121, 82, 14);
+		lblParallaxFactor.setBounds(10, 119, 82, 14);
 		panel_5.add(lblParallaxFactor);
 		
 		spinnerParaFactor = new JSpinner();
-		spinnerParaFactor.setBounds(92, 118, 46, 20);
+		spinnerParaFactor.setBounds(89, 116, 46, 20);
 		panel_5.add(spinnerParaFactor);
 		
 		JSeparator separator_4 = new JSeparator();
@@ -1458,60 +1525,60 @@ public class PekaSEFrame extends JFrame {
 		
 		comboBoxAi1 = new JComboBox();
 		comboBoxAi1.setEditable(true);
-		comboBoxAi1.setModel(new DefaultComboBoxModel(new String[] {"No AI", "Chicken", "An Egg", "Baby Chicken", "Bonus (B)", "Jumper", "Basic AI (B)", "Turn horizontally", "Looks Out for Cliffs", "Random Horizontal Change of Direction", "Random Jumping", "Follow the Player", "Random Horizontal Change of Direction", "Follow the Player if Player is in Front", "Transformation If Energy Below 2 (P)", "Transformation If Energy above 1 (P)", "Start Directions Towards Player", "Ammonition", "Non Stop", "Attack 1 If Damaged", "Self Destruction", "Attack 1 If Player is in Front", "Attack 1 If Player is Below", "Damaged by Water (P)", "Attack 2 If Player is in Front", "Kill 'em all", "Affected by Friction", "Hide", "Return to Start Position X", "Return to Start Position Y", "Teleport", "Throwable Weapon", "Falls When Shaken (B)", "Change Trap Stones If KO'ed", "Change Trap Stones If Damaged", "Self Destructs With Mother Sprite", "Moves X COS", "Moves Y COS", "Moves X SIN", "Moves Y SIN", "Moves X COS Fast", "Moves Y SIN Fast", "Moves X COS Slow", "Moves Y SIN Slow", "Moves Y SIN Free", "Random Turning", "Jump If Player Is Above", "Transformation Timer (B)", "Falls If Switch 1 Is Pressed (B)", "Falls If Switch 2 Is Pressed (B)", "Falls If Switch 3 Is Pressed (B)", "Moves Down  If Switch 1 Is Pressed", "Moves Up    If Switch 1 Is Pressed", "Moves Right If Switch 1 Is Pressed", "Moves Left  If Switch 1 Is Pressed", "Moves Down  If Switch 2 Is Pressed", "Moves Up    If Switch 2 Is Pressed", "Moves Right If Switch 2 Is Pressed", "Moves Left  If Switch 2 Is Pressed", "Moves Down  If Switch 3 Is Pressed", "Moves Up    If Switch 3 Is Pressed", "Moves Right If Switch 3 Is Pressed", "Moves Left  If Switch 3 Is Pressed", "Turns Vertically From Obstacle", "Random Vertical Starting Direction", "Starting Direction Towards Player", "Climber", "Climber Type 2", "Runs Away From Player If Sees Player", "Reborn (B)", "Arrow Left", "Arrow Right", "Arrow Up", "Arrow Down", "Move to Arrows Direction", "Background Sprite Moon", "Background Sprite Moves to Left", "Background Sprite Moves to Right", "Add Time to Clock", "Make Player Invisible", "Follow the Player Vertic. and Horiz.", "Follow the Player Vertic. and Horiz., if Player is in Front", "Random Move Vertic. and Horiz.", "Frog Jump 1", "Frog Jump 2", "Frog Jump 3", "Attack 2 if Damaged", "Attack 1 Non Stop", "Attack 2 Non Stop", "Turn if Damaged", "Evil One", "Info 1", "Info 2", "Info 3", "Info 4", "Info 5", "Info 6", "Info 7", "Info 8", "Info 9", "Info 10", "Info 11", "Info 12", "Info 13", "Info 14", "Info 15", "Info 16", "Info 17", "Info 18", "Info 19"}));
+		comboBoxAi1.setModel(new DefaultComboBoxModel(new String[] {"No AI", "Chicken", "An Egg", "Baby Chicken", "Bonus (B)", "Jumper", "Basic AI (B)", "Turn horizontally", "Looks Out for Cliffs", "Random Horizontal Change of Direction", "Random Jumping", "Follow the Player", "Random Horizontal Change of Direction", "Follow the Player if Player is in Front", "Transformation If Energy Below 2 (P)", "Transformation If Energy above 1 (P)", "Start Directions Towards Player", "Ammonition", "Non Stop", "Attack 1 If Damaged", "Self Destruction", "Attack 1 If Player is in Front", "Attack 1 If Player is Below", "Damaged by Water (P)", "Attack 2 If Player is in Front", "Kill 'em all", "Affected by Friction", "Hide", "Return to Start Position X", "Return to Start Position Y", "Teleport", "Throwable Weapon", "Falls When Shaken (B)", "Change Trap Stones If KO'ed", "Change Trap Stones If Damaged", "Self Destructs With Mother Sprite", "Moves X COS", "Moves Y COS", "Moves X SIN", "Moves Y SIN", "Moves X COS Fast", "Moves Y SIN Fast", "Moves X COS Slow", "Moves Y SIN Slow", "Moves Y SIN Free", "Random Turning", "Jump If Player Is Above", "Transformation Timer (B)", "Falls If Switch 1 Is Pressed (B)", "Falls If Switch 2 Is Pressed (B)", "Falls If Switch 3 Is Pressed (B)", "Moves Down If Switch 1 Is Pressed", "Moves Up If Switch 1 Is Pressed", "Moves Right If Switch 1 Is Pressed", "Moves Left If Switch 1 Is Pressed", "Moves Down If Switch 2 Is Pressed", "Moves Up If Switch 2 Is Pressed", "Moves Right If Switch 2 Is Pressed", "Moves Left If Switch 2 Is Pressed", "Moves Down If Switch 3 Is Pressed", "Moves Up If Switch 3 Is Pressed", "Moves Right If Switch 3 Is Pressed", "Moves Left If Switch 3 Is Pressed", "Turns Vertically From Obstacle", "Random Vertical Starting Direction", "Starting Direction Towards Player", "Climber", "Climber Type 2", "Runs Away From Player If Sees Player", "Reborn (B)", "Arrow Left", "Arrow Right", "Arrow Up", "Arrow Down", "Move to Arrows Direction", "Background Sprite Moon", "Background Sprite Moves to Left", "Background Sprite Moves to Right", "Add Time to Clock", "Make Player Invisible", "Follow the Player Vertic. and Horiz.", "Follow the Player Vertic. and Horiz., if Player is in Front", "Random Move Vertic. and Horiz.", "Frog Jump 1", "Frog Jump 2", "Frog Jump 3", "Attack 2 if Damaged", "Attack 1 Non Stop", "Attack 2 Non Stop", "Turn if Damaged", "Evil One", "Info 1", "Info 2", "Info 3", "Info 4", "Info 5", "Info 6", "Info 7", "Info 8", "Info 9", "Info 10", "Info 11", "Info 12", "Info 13", "Info 14", "Info 15", "Info 16", "Info 17", "Info 18", "Info 19"}));
 		comboBoxAi1.setBounds(44, 197, 287, 20);
 		panel_5.add(comboBoxAi1);
 		
 		comboBoxAi2 = new JComboBox();
-		comboBoxAi2.setModel(new DefaultComboBoxModel(new String[] {"No AI", "Chicken", "An Egg", "Baby Chicken", "Bonus (B)", "Jumper", "Basic AI (B)", "Turn horizontally", "Looks Out for Cliffs", "Random Horizontal Change of Direction", "Random Jumping", "Follow the Player", "Random Horizontal Change of Direction", "Follow the Player if Player is in Front", "Transformation If Energy Below 2 (P)", "Transformation If Energy above 1 (P)", "Start Directions Towards Player", "Ammonition", "Non Stop", "Attack 1 If Damaged", "Self Destruction", "Attack 1 If Player is in Front", "Attack 1 If Player is Below", "Damaged by Water (P)", "Attack 2 If Player is in Front", "Kill 'em all", "Affected by Friction", "Hide", "Return to Start Position X", "Return to Start Position Y", "Teleport", "Throwable Weapon", "Falls When Shaken (B)", "Change Trap Stones If KO'ed", "Change Trap Stones If Damaged", "Self Destructs With Mother Sprite", "Moves X COS", "Moves Y COS", "Moves X SIN", "Moves Y SIN", "Moves X COS Fast", "Moves Y SIN Fast", "Moves X COS Slow", "Moves Y SIN Slow", "Moves Y SIN Free", "Random Turning", "Jump If Player Is Above", "Transformation Timer (B)", "Falls If Switch 1 Is Pressed (B)", "Falls If Switch 2 Is Pressed (B)", "Falls If Switch 3 Is Pressed (B)", "Moves Down  If Switch 1 Is Pressed", "Moves Up    If Switch 1 Is Pressed", "Moves Right If Switch 1 Is Pressed", "Moves Left  If Switch 1 Is Pressed", "Moves Down  If Switch 2 Is Pressed", "Moves Up    If Switch 2 Is Pressed", "Moves Right If Switch 2 Is Pressed", "Moves Left  If Switch 2 Is Pressed", "Moves Down  If Switch 3 Is Pressed", "Moves Up    If Switch 3 Is Pressed", "Moves Right If Switch 3 Is Pressed", "Moves Left  If Switch 3 Is Pressed", "Turns Vertically From Obstacle", "Random Vertical Starting Direction", "Starting Direction Towards Player", "Climber", "Climber Type 2", "Runs Away From Player If Sees Player", "Reborn (B)", "Arrow Left", "Arrow Right", "Arrow Up", "Arrow Down", "Move to Arrows Direction", "Background Sprite Moon", "Background Sprite Moves to Left", "Background Sprite Moves to Right", "Add Time to Clock", "Make Player Invisible", "Follow the Player Vertic. and Horiz.", "Follow the Player Vertic. and Horiz., if Player is in Front", "Random Move Vertic. and Horiz.", "Frog Jump 1", "Frog Jump 2", "Frog Jump 3", "Attack 2 if Damaged", "Attack 1 Non Stop", "Attack 2 Non Stop", "Turn if Damaged", "Evil One", "Info 1", "Info 2", "Info 3", "Info 4", "Info 5", "Info 6", "Info 7", "Info 8", "Info 9", "Info 10", "Info 11", "Info 12", "Info 13", "Info 14", "Info 15", "Info 16", "Info 17", "Info 18", "Info 19"}));
+		comboBoxAi2.setModel(new DefaultComboBoxModel(new String[] {"No AI", "Chicken", "An Egg", "Baby Chicken", "Bonus (B)", "Jumper", "Basic AI (B)", "Turn horizontally", "Looks Out for Cliffs", "Random Horizontal Change of Direction", "Random Jumping", "Follow the Player", "Random Horizontal Change of Direction", "Follow the Player if Player is in Front", "Transformation If Energy Below 2 (P)", "Transformation If Energy above 1 (P)", "Start Directions Towards Player", "Ammonition", "Non Stop", "Attack 1 If Damaged", "Self Destruction", "Attack 1 If Player is in Front", "Attack 1 If Player is Below", "Damaged by Water (P)", "Attack 2 If Player is in Front", "Kill 'em all", "Affected by Friction", "Hide", "Return to Start Position X", "Return to Start Position Y", "Teleport", "Throwable Weapon", "Falls When Shaken (B)", "Change Trap Stones If KO'ed", "Change Trap Stones If Damaged", "Self Destructs With Mother Sprite", "Moves X COS", "Moves Y COS", "Moves X SIN", "Moves Y SIN", "Moves X COS Fast", "Moves Y SIN Fast", "Moves X COS Slow", "Moves Y SIN Slow", "Moves Y SIN Free", "Random Turning", "Jump If Player Is Above", "Transformation Timer (B)", "Falls If Switch 1 Is Pressed (B)", "Falls If Switch 2 Is Pressed (B)", "Falls If Switch 3 Is Pressed (B)", "Moves Down If Switch 1 Is Pressed", "Moves Up If Switch 1 Is Pressed", "Moves Right If Switch 1 Is Pressed", "Moves Left If Switch 1 Is Pressed", "Moves Down If Switch 2 Is Pressed", "Moves Up If Switch 2 Is Pressed", "Moves Right If Switch 2 Is Pressed", "Moves Left If Switch 2 Is Pressed", "Moves Down If Switch 3 Is Pressed", "Moves Up If Switch 3 Is Pressed", "Moves Right If Switch 3 Is Pressed", "Moves Left If Switch 3 Is Pressed", "Turns Vertically From Obstacle", "Random Vertical Starting Direction", "Starting Direction Towards Player", "Climber", "Climber Type 2", "Runs Away From Player If Sees Player", "Reborn (B)", "Arrow Left", "Arrow Right", "Arrow Up", "Arrow Down", "Move to Arrows Direction", "Background Sprite Moon", "Background Sprite Moves to Left", "Background Sprite Moves to Right", "Add Time to Clock", "Make Player Invisible", "Follow the Player Vertic. and Horiz.", "Follow the Player Vertic. and Horiz., if Player is in Front", "Random Move Vertic. and Horiz.", "Frog Jump 1", "Frog Jump 2", "Frog Jump 3", "Attack 2 if Damaged", "Attack 1 Non Stop", "Attack 2 Non Stop", "Turn if Damaged", "Evil One", "Info 1", "Info 2", "Info 3", "Info 4", "Info 5", "Info 6", "Info 7", "Info 8", "Info 9", "Info 10", "Info 11", "Info 12", "Info 13", "Info 14", "Info 15", "Info 16", "Info 17", "Info 18", "Info 19"}));
 		comboBoxAi2.setEditable(true);
 		comboBoxAi2.setBounds(44, 228, 287, 20);
 		panel_5.add(comboBoxAi2);
 		
 		comboBoxAi3 = new JComboBox();
-		comboBoxAi3.setModel(new DefaultComboBoxModel(new String[] {"No AI", "Chicken", "An Egg", "Baby Chicken", "Bonus (B)", "Jumper", "Basic AI (B)", "Turn horizontally", "Looks Out for Cliffs", "Random Horizontal Change of Direction", "Random Jumping", "Follow the Player", "Random Horizontal Change of Direction", "Follow the Player if Player is in Front", "Transformation If Energy Below 2 (P)", "Transformation If Energy above 1 (P)", "Start Directions Towards Player", "Ammonition", "Non Stop", "Attack 1 If Damaged", "Self Destruction", "Attack 1 If Player is in Front", "Attack 1 If Player is Below", "Damaged by Water (P)", "Attack 2 If Player is in Front", "Kill 'em all", "Affected by Friction", "Hide", "Return to Start Position X", "Return to Start Position Y", "Teleport", "Throwable Weapon", "Falls When Shaken (B)", "Change Trap Stones If KO'ed", "Change Trap Stones If Damaged", "Self Destructs With Mother Sprite", "Moves X COS", "Moves Y COS", "Moves X SIN", "Moves Y SIN", "Moves X COS Fast", "Moves Y SIN Fast", "Moves X COS Slow", "Moves Y SIN Slow", "Moves Y SIN Free", "Random Turning", "Jump If Player Is Above", "Transformation Timer (B)", "Falls If Switch 1 Is Pressed (B)", "Falls If Switch 2 Is Pressed (B)", "Falls If Switch 3 Is Pressed (B)", "Moves Down  If Switch 1 Is Pressed", "Moves Up    If Switch 1 Is Pressed", "Moves Right If Switch 1 Is Pressed", "Moves Left  If Switch 1 Is Pressed", "Moves Down  If Switch 2 Is Pressed", "Moves Up    If Switch 2 Is Pressed", "Moves Right If Switch 2 Is Pressed", "Moves Left  If Switch 2 Is Pressed", "Moves Down  If Switch 3 Is Pressed", "Moves Up    If Switch 3 Is Pressed", "Moves Right If Switch 3 Is Pressed", "Moves Left  If Switch 3 Is Pressed", "Turns Vertically From Obstacle", "Random Vertical Starting Direction", "Starting Direction Towards Player", "Climber", "Climber Type 2", "Runs Away From Player If Sees Player", "Reborn (B)", "Arrow Left", "Arrow Right", "Arrow Up", "Arrow Down", "Move to Arrows Direction", "Background Sprite Moon", "Background Sprite Moves to Left", "Background Sprite Moves to Right", "Add Time to Clock", "Make Player Invisible", "Follow the Player Vertic. and Horiz.", "Follow the Player Vertic. and Horiz., if Player is in Front", "Random Move Vertic. and Horiz.", "Frog Jump 1", "Frog Jump 2", "Frog Jump 3", "Attack 2 if Damaged", "Attack 1 Non Stop", "Attack 2 Non Stop", "Turn if Damaged", "Evil One", "Info 1", "Info 2", "Info 3", "Info 4", "Info 5", "Info 6", "Info 7", "Info 8", "Info 9", "Info 10", "Info 11", "Info 12", "Info 13", "Info 14", "Info 15", "Info 16", "Info 17", "Info 18", "Info 19"}));
+		comboBoxAi3.setModel(new DefaultComboBoxModel(new String[] {"No AI", "Chicken", "An Egg", "Baby Chicken", "Bonus (B)", "Jumper", "Basic AI (B)", "Turn horizontally", "Looks Out for Cliffs", "Random Horizontal Change of Direction", "Random Jumping", "Follow the Player", "Random Horizontal Change of Direction", "Follow the Player if Player is in Front", "Transformation If Energy Below 2 (P)", "Transformation If Energy above 1 (P)", "Start Directions Towards Player", "Ammonition", "Non Stop", "Attack 1 If Damaged", "Self Destruction", "Attack 1 If Player is in Front", "Attack 1 If Player is Below", "Damaged by Water (P)", "Attack 2 If Player is in Front", "Kill 'em all", "Affected by Friction", "Hide", "Return to Start Position X", "Return to Start Position Y", "Teleport", "Throwable Weapon", "Falls When Shaken (B)", "Change Trap Stones If KO'ed", "Change Trap Stones If Damaged", "Self Destructs With Mother Sprite", "Moves X COS", "Moves Y COS", "Moves X SIN", "Moves Y SIN", "Moves X COS Fast", "Moves Y SIN Fast", "Moves X COS Slow", "Moves Y SIN Slow", "Moves Y SIN Free", "Random Turning", "Jump If Player Is Above", "Transformation Timer (B)", "Falls If Switch 1 Is Pressed (B)", "Falls If Switch 2 Is Pressed (B)", "Falls If Switch 3 Is Pressed (B)", "Moves Down If Switch 1 Is Pressed", "Moves Up If Switch 1 Is Pressed", "Moves Right If Switch 1 Is Pressed", "Moves Left If Switch 1 Is Pressed", "Moves Down If Switch 2 Is Pressed", "Moves Up If Switch 2 Is Pressed", "Moves Right If Switch 2 Is Pressed", "Moves Left If Switch 2 Is Pressed", "Moves Down If Switch 3 Is Pressed", "Moves Up If Switch 3 Is Pressed", "Moves Right If Switch 3 Is Pressed", "Moves Left If Switch 3 Is Pressed", "Turns Vertically From Obstacle", "Random Vertical Starting Direction", "Starting Direction Towards Player", "Climber", "Climber Type 2", "Runs Away From Player If Sees Player", "Reborn (B)", "Arrow Left", "Arrow Right", "Arrow Up", "Arrow Down", "Move to Arrows Direction", "Background Sprite Moon", "Background Sprite Moves to Left", "Background Sprite Moves to Right", "Add Time to Clock", "Make Player Invisible", "Follow the Player Vertic. and Horiz.", "Follow the Player Vertic. and Horiz., if Player is in Front", "Random Move Vertic. and Horiz.", "Frog Jump 1", "Frog Jump 2", "Frog Jump 3", "Attack 2 if Damaged", "Attack 1 Non Stop", "Attack 2 Non Stop", "Turn if Damaged", "Evil One", "Info 1", "Info 2", "Info 3", "Info 4", "Info 5", "Info 6", "Info 7", "Info 8", "Info 9", "Info 10", "Info 11", "Info 12", "Info 13", "Info 14", "Info 15", "Info 16", "Info 17", "Info 18", "Info 19"}));
 		comboBoxAi3.setEditable(true);
 		comboBoxAi3.setBounds(44, 259, 287, 20);
 		panel_5.add(comboBoxAi3);
 		
 		comboBoxAi4 = new JComboBox();
-		comboBoxAi4.setModel(new DefaultComboBoxModel(new String[] {"No AI", "Chicken", "An Egg", "Baby Chicken", "Bonus (B)", "Jumper", "Basic AI (B)", "Turn horizontally", "Looks Out for Cliffs", "Random Horizontal Change of Direction", "Random Jumping", "Follow the Player", "Random Horizontal Change of Direction", "Follow the Player if Player is in Front", "Transformation If Energy Below 2 (P)", "Transformation If Energy above 1 (P)", "Start Directions Towards Player", "Ammonition", "Non Stop", "Attack 1 If Damaged", "Self Destruction", "Attack 1 If Player is in Front", "Attack 1 If Player is Below", "Damaged by Water (P)", "Attack 2 If Player is in Front", "Kill 'em all", "Affected by Friction", "Hide", "Return to Start Position X", "Return to Start Position Y", "Teleport", "Throwable Weapon", "Falls When Shaken (B)", "Change Trap Stones If KO'ed", "Change Trap Stones If Damaged", "Self Destructs With Mother Sprite", "Moves X COS", "Moves Y COS", "Moves X SIN", "Moves Y SIN", "Moves X COS Fast", "Moves Y SIN Fast", "Moves X COS Slow", "Moves Y SIN Slow", "Moves Y SIN Free", "Random Turning", "Jump If Player Is Above", "Transformation Timer (B)", "Falls If Switch 1 Is Pressed (B)", "Falls If Switch 2 Is Pressed (B)", "Falls If Switch 3 Is Pressed (B)", "Moves Down  If Switch 1 Is Pressed", "Moves Up    If Switch 1 Is Pressed", "Moves Right If Switch 1 Is Pressed", "Moves Left  If Switch 1 Is Pressed", "Moves Down  If Switch 2 Is Pressed", "Moves Up    If Switch 2 Is Pressed", "Moves Right If Switch 2 Is Pressed", "Moves Left  If Switch 2 Is Pressed", "Moves Down  If Switch 3 Is Pressed", "Moves Up    If Switch 3 Is Pressed", "Moves Right If Switch 3 Is Pressed", "Moves Left  If Switch 3 Is Pressed", "Turns Vertically From Obstacle", "Random Vertical Starting Direction", "Starting Direction Towards Player", "Climber", "Climber Type 2", "Runs Away From Player If Sees Player", "Reborn (B)", "Arrow Left", "Arrow Right", "Arrow Up", "Arrow Down", "Move to Arrows Direction", "Background Sprite Moon", "Background Sprite Moves to Left", "Background Sprite Moves to Right", "Add Time to Clock", "Make Player Invisible", "Follow the Player Vertic. and Horiz.", "Follow the Player Vertic. and Horiz., if Player is in Front", "Random Move Vertic. and Horiz.", "Frog Jump 1", "Frog Jump 2", "Frog Jump 3", "Attack 2 if Damaged", "Attack 1 Non Stop", "Attack 2 Non Stop", "Turn if Damaged", "Evil One", "Info 1", "Info 2", "Info 3", "Info 4", "Info 5", "Info 6", "Info 7", "Info 8", "Info 9", "Info 10", "Info 11", "Info 12", "Info 13", "Info 14", "Info 15", "Info 16", "Info 17", "Info 18", "Info 19"}));
+		comboBoxAi4.setModel(new DefaultComboBoxModel(new String[] {"No AI", "Chicken", "An Egg", "Baby Chicken", "Bonus (B)", "Jumper", "Basic AI (B)", "Turn horizontally", "Looks Out for Cliffs", "Random Horizontal Change of Direction", "Random Jumping", "Follow the Player", "Random Horizontal Change of Direction", "Follow the Player if Player is in Front", "Transformation If Energy Below 2 (P)", "Transformation If Energy above 1 (P)", "Start Directions Towards Player", "Ammonition", "Non Stop", "Attack 1 If Damaged", "Self Destruction", "Attack 1 If Player is in Front", "Attack 1 If Player is Below", "Damaged by Water (P)", "Attack 2 If Player is in Front", "Kill 'em all", "Affected by Friction", "Hide", "Return to Start Position X", "Return to Start Position Y", "Teleport", "Throwable Weapon", "Falls When Shaken (B)", "Change Trap Stones If KO'ed", "Change Trap Stones If Damaged", "Self Destructs With Mother Sprite", "Moves X COS", "Moves Y COS", "Moves X SIN", "Moves Y SIN", "Moves X COS Fast", "Moves Y SIN Fast", "Moves X COS Slow", "Moves Y SIN Slow", "Moves Y SIN Free", "Random Turning", "Jump If Player Is Above", "Transformation Timer (B)", "Falls If Switch 1 Is Pressed (B)", "Falls If Switch 2 Is Pressed (B)", "Falls If Switch 3 Is Pressed (B)", "Moves Down If Switch 1 Is Pressed", "Moves Up If Switch 1 Is Pressed", "Moves Right If Switch 1 Is Pressed", "Moves Left If Switch 1 Is Pressed", "Moves Down If Switch 2 Is Pressed", "Moves Up If Switch 2 Is Pressed", "Moves Right If Switch 2 Is Pressed", "Moves Left If Switch 2 Is Pressed", "Moves Down If Switch 3 Is Pressed", "Moves Up If Switch 3 Is Pressed", "Moves Right If Switch 3 Is Pressed", "Moves Left If Switch 3 Is Pressed", "Turns Vertically From Obstacle", "Random Vertical Starting Direction", "Starting Direction Towards Player", "Climber", "Climber Type 2", "Runs Away From Player If Sees Player", "Reborn (B)", "Arrow Left", "Arrow Right", "Arrow Up", "Arrow Down", "Move to Arrows Direction", "Background Sprite Moon", "Background Sprite Moves to Left", "Background Sprite Moves to Right", "Add Time to Clock", "Make Player Invisible", "Follow the Player Vertic. and Horiz.", "Follow the Player Vertic. and Horiz., if Player is in Front", "Random Move Vertic. and Horiz.", "Frog Jump 1", "Frog Jump 2", "Frog Jump 3", "Attack 2 if Damaged", "Attack 1 Non Stop", "Attack 2 Non Stop", "Turn if Damaged", "Evil One", "Info 1", "Info 2", "Info 3", "Info 4", "Info 5", "Info 6", "Info 7", "Info 8", "Info 9", "Info 10", "Info 11", "Info 12", "Info 13", "Info 14", "Info 15", "Info 16", "Info 17", "Info 18", "Info 19"}));
 		comboBoxAi4.setEditable(true);
 		comboBoxAi4.setBounds(44, 290, 287, 20);
 		panel_5.add(comboBoxAi4);
 		
 		comboBoxAi5 = new JComboBox();
-		comboBoxAi5.setModel(new DefaultComboBoxModel(new String[] {"No AI", "Chicken", "An Egg", "Baby Chicken", "Bonus (B)", "Jumper", "Basic AI (B)", "Turn horizontally", "Looks Out for Cliffs", "Random Horizontal Change of Direction", "Random Jumping", "Follow the Player", "Random Horizontal Change of Direction", "Follow the Player if Player is in Front", "Transformation If Energy Below 2 (P)", "Transformation If Energy above 1 (P)", "Start Directions Towards Player", "Ammonition", "Non Stop", "Attack 1 If Damaged", "Self Destruction", "Attack 1 If Player is in Front", "Attack 1 If Player is Below", "Damaged by Water (P)", "Attack 2 If Player is in Front", "Kill 'em all", "Affected by Friction", "Hide", "Return to Start Position X", "Return to Start Position Y", "Teleport", "Throwable Weapon", "Falls When Shaken (B)", "Change Trap Stones If KO'ed", "Change Trap Stones If Damaged", "Self Destructs With Mother Sprite", "Moves X COS", "Moves Y COS", "Moves X SIN", "Moves Y SIN", "Moves X COS Fast", "Moves Y SIN Fast", "Moves X COS Slow", "Moves Y SIN Slow", "Moves Y SIN Free", "Random Turning", "Jump If Player Is Above", "Transformation Timer (B)", "Falls If Switch 1 Is Pressed (B)", "Falls If Switch 2 Is Pressed (B)", "Falls If Switch 3 Is Pressed (B)", "Moves Down  If Switch 1 Is Pressed", "Moves Up    If Switch 1 Is Pressed", "Moves Right If Switch 1 Is Pressed", "Moves Left  If Switch 1 Is Pressed", "Moves Down  If Switch 2 Is Pressed", "Moves Up    If Switch 2 Is Pressed", "Moves Right If Switch 2 Is Pressed", "Moves Left  If Switch 2 Is Pressed", "Moves Down  If Switch 3 Is Pressed", "Moves Up    If Switch 3 Is Pressed", "Moves Right If Switch 3 Is Pressed", "Moves Left  If Switch 3 Is Pressed", "Turns Vertically From Obstacle", "Random Vertical Starting Direction", "Starting Direction Towards Player", "Climber", "Climber Type 2", "Runs Away From Player If Sees Player", "Reborn (B)", "Arrow Left", "Arrow Right", "Arrow Up", "Arrow Down", "Move to Arrows Direction", "Background Sprite Moon", "Background Sprite Moves to Left", "Background Sprite Moves to Right", "Add Time to Clock", "Make Player Invisible", "Follow the Player Vertic. and Horiz.", "Follow the Player Vertic. and Horiz., if Player is in Front", "Random Move Vertic. and Horiz.", "Frog Jump 1", "Frog Jump 2", "Frog Jump 3", "Attack 2 if Damaged", "Attack 1 Non Stop", "Attack 2 Non Stop", "Turn if Damaged", "Evil One", "Info 1", "Info 2", "Info 3", "Info 4", "Info 5", "Info 6", "Info 7", "Info 8", "Info 9", "Info 10", "Info 11", "Info 12", "Info 13", "Info 14", "Info 15", "Info 16", "Info 17", "Info 18", "Info 19"}));
+		comboBoxAi5.setModel(new DefaultComboBoxModel(new String[] {"No AI", "Chicken", "An Egg", "Baby Chicken", "Bonus (B)", "Jumper", "Basic AI (B)", "Turn horizontally", "Looks Out for Cliffs", "Random Horizontal Change of Direction", "Random Jumping", "Follow the Player", "Random Horizontal Change of Direction", "Follow the Player if Player is in Front", "Transformation If Energy Below 2 (P)", "Transformation If Energy above 1 (P)", "Start Directions Towards Player", "Ammonition", "Non Stop", "Attack 1 If Damaged", "Self Destruction", "Attack 1 If Player is in Front", "Attack 1 If Player is Below", "Damaged by Water (P)", "Attack 2 If Player is in Front", "Kill 'em all", "Affected by Friction", "Hide", "Return to Start Position X", "Return to Start Position Y", "Teleport", "Throwable Weapon", "Falls When Shaken (B)", "Change Trap Stones If KO'ed", "Change Trap Stones If Damaged", "Self Destructs With Mother Sprite", "Moves X COS", "Moves Y COS", "Moves X SIN", "Moves Y SIN", "Moves X COS Fast", "Moves Y SIN Fast", "Moves X COS Slow", "Moves Y SIN Slow", "Moves Y SIN Free", "Random Turning", "Jump If Player Is Above", "Transformation Timer (B)", "Falls If Switch 1 Is Pressed (B)", "Falls If Switch 2 Is Pressed (B)", "Falls If Switch 3 Is Pressed (B)", "Moves Down If Switch 1 Is Pressed", "Moves Up If Switch 1 Is Pressed", "Moves Right If Switch 1 Is Pressed", "Moves Left If Switch 1 Is Pressed", "Moves Down If Switch 2 Is Pressed", "Moves Up If Switch 2 Is Pressed", "Moves Right If Switch 2 Is Pressed", "Moves Left If Switch 2 Is Pressed", "Moves Down If Switch 3 Is Pressed", "Moves Up If Switch 3 Is Pressed", "Moves Right If Switch 3 Is Pressed", "Moves Left If Switch 3 Is Pressed", "Turns Vertically From Obstacle", "Random Vertical Starting Direction", "Starting Direction Towards Player", "Climber", "Climber Type 2", "Runs Away From Player If Sees Player", "Reborn (B)", "Arrow Left", "Arrow Right", "Arrow Up", "Arrow Down", "Move to Arrows Direction", "Background Sprite Moon", "Background Sprite Moves to Left", "Background Sprite Moves to Right", "Add Time to Clock", "Make Player Invisible", "Follow the Player Vertic. and Horiz.", "Follow the Player Vertic. and Horiz., if Player is in Front", "Random Move Vertic. and Horiz.", "Frog Jump 1", "Frog Jump 2", "Frog Jump 3", "Attack 2 if Damaged", "Attack 1 Non Stop", "Attack 2 Non Stop", "Turn if Damaged", "Evil One", "Info 1", "Info 2", "Info 3", "Info 4", "Info 5", "Info 6", "Info 7", "Info 8", "Info 9", "Info 10", "Info 11", "Info 12", "Info 13", "Info 14", "Info 15", "Info 16", "Info 17", "Info 18", "Info 19"}));
 		comboBoxAi5.setEditable(true);
 		comboBoxAi5.setBounds(44, 321, 287, 20);
 		panel_5.add(comboBoxAi5);
 		
 		comboBoxAi10 = new JComboBox();
-		comboBoxAi10.setModel(new DefaultComboBoxModel(new String[] {"No AI", "Chicken", "An Egg", "Baby Chicken", "Bonus (B)", "Jumper", "Basic AI (B)", "Turn horizontally", "Looks Out for Cliffs", "Random Horizontal Change of Direction", "Random Jumping", "Follow the Player", "Random Horizontal Change of Direction", "Follow the Player if Player is in Front", "Transformation If Energy Below 2 (P)", "Transformation If Energy above 1 (P)", "Start Directions Towards Player", "Ammonition", "Non Stop", "Attack 1 If Damaged", "Self Destruction", "Attack 1 If Player is in Front", "Attack 1 If Player is Below", "Damaged by Water (P)", "Attack 2 If Player is in Front", "Kill 'em all", "Affected by Friction", "Hide", "Return to Start Position X", "Return to Start Position Y", "Teleport", "Throwable Weapon", "Falls When Shaken (B)", "Change Trap Stones If KO'ed", "Change Trap Stones If Damaged", "Self Destructs With Mother Sprite", "Moves X COS", "Moves Y COS", "Moves X SIN", "Moves Y SIN", "Moves X COS Fast", "Moves Y SIN Fast", "Moves X COS Slow", "Moves Y SIN Slow", "Moves Y SIN Free", "Random Turning", "Jump If Player Is Above", "Transformation Timer (B)", "Falls If Switch 1 Is Pressed (B)", "Falls If Switch 2 Is Pressed (B)", "Falls If Switch 3 Is Pressed (B)", "Moves Down  If Switch 1 Is Pressed", "Moves Up    If Switch 1 Is Pressed", "Moves Right If Switch 1 Is Pressed", "Moves Left  If Switch 1 Is Pressed", "Moves Down  If Switch 2 Is Pressed", "Moves Up    If Switch 2 Is Pressed", "Moves Right If Switch 2 Is Pressed", "Moves Left  If Switch 2 Is Pressed", "Moves Down  If Switch 3 Is Pressed", "Moves Up    If Switch 3 Is Pressed", "Moves Right If Switch 3 Is Pressed", "Moves Left  If Switch 3 Is Pressed", "Turns Vertically From Obstacle", "Random Vertical Starting Direction", "Starting Direction Towards Player", "Climber", "Climber Type 2", "Runs Away From Player If Sees Player", "Reborn (B)", "Arrow Left", "Arrow Right", "Arrow Up", "Arrow Down", "Move to Arrows Direction", "Background Sprite Moon", "Background Sprite Moves to Left", "Background Sprite Moves to Right", "Add Time to Clock", "Make Player Invisible", "Follow the Player Vertic. and Horiz.", "Follow the Player Vertic. and Horiz., if Player is in Front", "Random Move Vertic. and Horiz.", "Frog Jump 1", "Frog Jump 2", "Frog Jump 3", "Attack 2 if Damaged", "Attack 1 Non Stop", "Attack 2 Non Stop", "Turn if Damaged", "Evil One", "Info 1", "Info 2", "Info 3", "Info 4", "Info 5", "Info 6", "Info 7", "Info 8", "Info 9", "Info 10", "Info 11", "Info 12", "Info 13", "Info 14", "Info 15", "Info 16", "Info 17", "Info 18", "Info 19"}));
+		comboBoxAi10.setModel(new DefaultComboBoxModel(new String[] {"No AI", "Chicken", "An Egg", "Baby Chicken", "Bonus (B)", "Jumper", "Basic AI (B)", "Turn horizontally", "Looks Out for Cliffs", "Random Horizontal Change of Direction", "Random Jumping", "Follow the Player", "Random Horizontal Change of Direction", "Follow the Player if Player is in Front", "Transformation If Energy Below 2 (P)", "Transformation If Energy above 1 (P)", "Start Directions Towards Player", "Ammonition", "Non Stop", "Attack 1 If Damaged", "Self Destruction", "Attack 1 If Player is in Front", "Attack 1 If Player is Below", "Damaged by Water (P)", "Attack 2 If Player is in Front", "Kill 'em all", "Affected by Friction", "Hide", "Return to Start Position X", "Return to Start Position Y", "Teleport", "Throwable Weapon", "Falls When Shaken (B)", "Change Trap Stones If KO'ed", "Change Trap Stones If Damaged", "Self Destructs With Mother Sprite", "Moves X COS", "Moves Y COS", "Moves X SIN", "Moves Y SIN", "Moves X COS Fast", "Moves Y SIN Fast", "Moves X COS Slow", "Moves Y SIN Slow", "Moves Y SIN Free", "Random Turning", "Jump If Player Is Above", "Transformation Timer (B)", "Falls If Switch 1 Is Pressed (B)", "Falls If Switch 2 Is Pressed (B)", "Falls If Switch 3 Is Pressed (B)", "Moves Down If Switch 1 Is Pressed", "Moves Up If Switch 1 Is Pressed", "Moves Right If Switch 1 Is Pressed", "Moves Left If Switch 1 Is Pressed", "Moves Down If Switch 2 Is Pressed", "Moves Up If Switch 2 Is Pressed", "Moves Right If Switch 2 Is Pressed", "Moves Left If Switch 2 Is Pressed", "Moves Down If Switch 3 Is Pressed", "Moves Up If Switch 3 Is Pressed", "Moves Right If Switch 3 Is Pressed", "Moves Left If Switch 3 Is Pressed", "Turns Vertically From Obstacle", "Random Vertical Starting Direction", "Starting Direction Towards Player", "Climber", "Climber Type 2", "Runs Away From Player If Sees Player", "Reborn (B)", "Arrow Left", "Arrow Right", "Arrow Up", "Arrow Down", "Move to Arrows Direction", "Background Sprite Moon", "Background Sprite Moves to Left", "Background Sprite Moves to Right", "Add Time to Clock", "Make Player Invisible", "Follow the Player Vertic. and Horiz.", "Follow the Player Vertic. and Horiz., if Player is in Front", "Random Move Vertic. and Horiz.", "Frog Jump 1", "Frog Jump 2", "Frog Jump 3", "Attack 2 if Damaged", "Attack 1 Non Stop", "Attack 2 Non Stop", "Turn if Damaged", "Evil One", "Info 1", "Info 2", "Info 3", "Info 4", "Info 5", "Info 6", "Info 7", "Info 8", "Info 9", "Info 10", "Info 11", "Info 12", "Info 13", "Info 14", "Info 15", "Info 16", "Info 17", "Info 18", "Info 19"}));
 		comboBoxAi10.setEditable(true);
 		comboBoxAi10.setBounds(381, 321, 287, 20);
 		panel_5.add(comboBoxAi10);
 		
 		comboBoxAi9 = new JComboBox();
-		comboBoxAi9.setModel(new DefaultComboBoxModel(new String[] {"No AI", "Chicken", "An Egg", "Baby Chicken", "Bonus (B)", "Jumper", "Basic AI (B)", "Turn horizontally", "Looks Out for Cliffs", "Random Horizontal Change of Direction", "Random Jumping", "Follow the Player", "Random Horizontal Change of Direction", "Follow the Player if Player is in Front", "Transformation If Energy Below 2 (P)", "Transformation If Energy above 1 (P)", "Start Directions Towards Player", "Ammonition", "Non Stop", "Attack 1 If Damaged", "Self Destruction", "Attack 1 If Player is in Front", "Attack 1 If Player is Below", "Damaged by Water (P)", "Attack 2 If Player is in Front", "Kill 'em all", "Affected by Friction", "Hide", "Return to Start Position X", "Return to Start Position Y", "Teleport", "Throwable Weapon", "Falls When Shaken (B)", "Change Trap Stones If KO'ed", "Change Trap Stones If Damaged", "Self Destructs With Mother Sprite", "Moves X COS", "Moves Y COS", "Moves X SIN", "Moves Y SIN", "Moves X COS Fast", "Moves Y SIN Fast", "Moves X COS Slow", "Moves Y SIN Slow", "Moves Y SIN Free", "Random Turning", "Jump If Player Is Above", "Transformation Timer (B)", "Falls If Switch 1 Is Pressed (B)", "Falls If Switch 2 Is Pressed (B)", "Falls If Switch 3 Is Pressed (B)", "Moves Down  If Switch 1 Is Pressed", "Moves Up    If Switch 1 Is Pressed", "Moves Right If Switch 1 Is Pressed", "Moves Left  If Switch 1 Is Pressed", "Moves Down  If Switch 2 Is Pressed", "Moves Up    If Switch 2 Is Pressed", "Moves Right If Switch 2 Is Pressed", "Moves Left  If Switch 2 Is Pressed", "Moves Down  If Switch 3 Is Pressed", "Moves Up    If Switch 3 Is Pressed", "Moves Right If Switch 3 Is Pressed", "Moves Left  If Switch 3 Is Pressed", "Turns Vertically From Obstacle", "Random Vertical Starting Direction", "Starting Direction Towards Player", "Climber", "Climber Type 2", "Runs Away From Player If Sees Player", "Reborn (B)", "Arrow Left", "Arrow Right", "Arrow Up", "Arrow Down", "Move to Arrows Direction", "Background Sprite Moon", "Background Sprite Moves to Left", "Background Sprite Moves to Right", "Add Time to Clock", "Make Player Invisible", "Follow the Player Vertic. and Horiz.", "Follow the Player Vertic. and Horiz., if Player is in Front", "Random Move Vertic. and Horiz.", "Frog Jump 1", "Frog Jump 2", "Frog Jump 3", "Attack 2 if Damaged", "Attack 1 Non Stop", "Attack 2 Non Stop", "Turn if Damaged", "Evil One", "Info 1", "Info 2", "Info 3", "Info 4", "Info 5", "Info 6", "Info 7", "Info 8", "Info 9", "Info 10", "Info 11", "Info 12", "Info 13", "Info 14", "Info 15", "Info 16", "Info 17", "Info 18", "Info 19"}));
+		comboBoxAi9.setModel(new DefaultComboBoxModel(new String[] {"No AI", "Chicken", "An Egg", "Baby Chicken", "Bonus (B)", "Jumper", "Basic AI (B)", "Turn horizontally", "Looks Out for Cliffs", "Random Horizontal Change of Direction", "Random Jumping", "Follow the Player", "Random Horizontal Change of Direction", "Follow the Player if Player is in Front", "Transformation If Energy Below 2 (P)", "Transformation If Energy above 1 (P)", "Start Directions Towards Player", "Ammonition", "Non Stop", "Attack 1 If Damaged", "Self Destruction", "Attack 1 If Player is in Front", "Attack 1 If Player is Below", "Damaged by Water (P)", "Attack 2 If Player is in Front", "Kill 'em all", "Affected by Friction", "Hide", "Return to Start Position X", "Return to Start Position Y", "Teleport", "Throwable Weapon", "Falls When Shaken (B)", "Change Trap Stones If KO'ed", "Change Trap Stones If Damaged", "Self Destructs With Mother Sprite", "Moves X COS", "Moves Y COS", "Moves X SIN", "Moves Y SIN", "Moves X COS Fast", "Moves Y SIN Fast", "Moves X COS Slow", "Moves Y SIN Slow", "Moves Y SIN Free", "Random Turning", "Jump If Player Is Above", "Transformation Timer (B)", "Falls If Switch 1 Is Pressed (B)", "Falls If Switch 2 Is Pressed (B)", "Falls If Switch 3 Is Pressed (B)", "Moves Down If Switch 1 Is Pressed", "Moves Up If Switch 1 Is Pressed", "Moves Right If Switch 1 Is Pressed", "Moves Left If Switch 1 Is Pressed", "Moves Down If Switch 2 Is Pressed", "Moves Up If Switch 2 Is Pressed", "Moves Right If Switch 2 Is Pressed", "Moves Left If Switch 2 Is Pressed", "Moves Down If Switch 3 Is Pressed", "Moves Up If Switch 3 Is Pressed", "Moves Right If Switch 3 Is Pressed", "Moves Left If Switch 3 Is Pressed", "Turns Vertically From Obstacle", "Random Vertical Starting Direction", "Starting Direction Towards Player", "Climber", "Climber Type 2", "Runs Away From Player If Sees Player", "Reborn (B)", "Arrow Left", "Arrow Right", "Arrow Up", "Arrow Down", "Move to Arrows Direction", "Background Sprite Moon", "Background Sprite Moves to Left", "Background Sprite Moves to Right", "Add Time to Clock", "Make Player Invisible", "Follow the Player Vertic. and Horiz.", "Follow the Player Vertic. and Horiz., if Player is in Front", "Random Move Vertic. and Horiz.", "Frog Jump 1", "Frog Jump 2", "Frog Jump 3", "Attack 2 if Damaged", "Attack 1 Non Stop", "Attack 2 Non Stop", "Turn if Damaged", "Evil One", "Info 1", "Info 2", "Info 3", "Info 4", "Info 5", "Info 6", "Info 7", "Info 8", "Info 9", "Info 10", "Info 11", "Info 12", "Info 13", "Info 14", "Info 15", "Info 16", "Info 17", "Info 18", "Info 19"}));
 		comboBoxAi9.setEditable(true);
 		comboBoxAi9.setBounds(381, 290, 287, 20);
 		panel_5.add(comboBoxAi9);
 		
 		comboBoxAi8 = new JComboBox();
-		comboBoxAi8.setModel(new DefaultComboBoxModel(new String[] {"No AI", "Chicken", "An Egg", "Baby Chicken", "Bonus (B)", "Jumper", "Basic AI (B)", "Turn horizontally", "Looks Out for Cliffs", "Random Horizontal Change of Direction", "Random Jumping", "Follow the Player", "Random Horizontal Change of Direction", "Follow the Player if Player is in Front", "Transformation If Energy Below 2 (P)", "Transformation If Energy above 1 (P)", "Start Directions Towards Player", "Ammonition", "Non Stop", "Attack 1 If Damaged", "Self Destruction", "Attack 1 If Player is in Front", "Attack 1 If Player is Below", "Damaged by Water (P)", "Attack 2 If Player is in Front", "Kill 'em all", "Affected by Friction", "Hide", "Return to Start Position X", "Return to Start Position Y", "Teleport", "Throwable Weapon", "Falls When Shaken (B)", "Change Trap Stones If KO'ed", "Change Trap Stones If Damaged", "Self Destructs With Mother Sprite", "Moves X COS", "Moves Y COS", "Moves X SIN", "Moves Y SIN", "Moves X COS Fast", "Moves Y SIN Fast", "Moves X COS Slow", "Moves Y SIN Slow", "Moves Y SIN Free", "Random Turning", "Jump If Player Is Above", "Transformation Timer (B)", "Falls If Switch 1 Is Pressed (B)", "Falls If Switch 2 Is Pressed (B)", "Falls If Switch 3 Is Pressed (B)", "Moves Down  If Switch 1 Is Pressed", "Moves Up    If Switch 1 Is Pressed", "Moves Right If Switch 1 Is Pressed", "Moves Left  If Switch 1 Is Pressed", "Moves Down  If Switch 2 Is Pressed", "Moves Up    If Switch 2 Is Pressed", "Moves Right If Switch 2 Is Pressed", "Moves Left  If Switch 2 Is Pressed", "Moves Down  If Switch 3 Is Pressed", "Moves Up    If Switch 3 Is Pressed", "Moves Right If Switch 3 Is Pressed", "Moves Left  If Switch 3 Is Pressed", "Turns Vertically From Obstacle", "Random Vertical Starting Direction", "Starting Direction Towards Player", "Climber", "Climber Type 2", "Runs Away From Player If Sees Player", "Reborn (B)", "Arrow Left", "Arrow Right", "Arrow Up", "Arrow Down", "Move to Arrows Direction", "Background Sprite Moon", "Background Sprite Moves to Left", "Background Sprite Moves to Right", "Add Time to Clock", "Make Player Invisible", "Follow the Player Vertic. and Horiz.", "Follow the Player Vertic. and Horiz., if Player is in Front", "Random Move Vertic. and Horiz.", "Frog Jump 1", "Frog Jump 2", "Frog Jump 3", "Attack 2 if Damaged", "Attack 1 Non Stop", "Attack 2 Non Stop", "Turn if Damaged", "Evil One", "Info 1", "Info 2", "Info 3", "Info 4", "Info 5", "Info 6", "Info 7", "Info 8", "Info 9", "Info 10", "Info 11", "Info 12", "Info 13", "Info 14", "Info 15", "Info 16", "Info 17", "Info 18", "Info 19"}));
+		comboBoxAi8.setModel(new DefaultComboBoxModel(new String[] {"No AI", "Chicken", "An Egg", "Baby Chicken", "Bonus (B)", "Jumper", "Basic AI (B)", "Turn horizontally", "Looks Out for Cliffs", "Random Horizontal Change of Direction", "Random Jumping", "Follow the Player", "Random Horizontal Change of Direction", "Follow the Player if Player is in Front", "Transformation If Energy Below 2 (P)", "Transformation If Energy above 1 (P)", "Start Directions Towards Player", "Ammonition", "Non Stop", "Attack 1 If Damaged", "Self Destruction", "Attack 1 If Player is in Front", "Attack 1 If Player is Below", "Damaged by Water (P)", "Attack 2 If Player is in Front", "Kill 'em all", "Affected by Friction", "Hide", "Return to Start Position X", "Return to Start Position Y", "Teleport", "Throwable Weapon", "Falls When Shaken (B)", "Change Trap Stones If KO'ed", "Change Trap Stones If Damaged", "Self Destructs With Mother Sprite", "Moves X COS", "Moves Y COS", "Moves X SIN", "Moves Y SIN", "Moves X COS Fast", "Moves Y SIN Fast", "Moves X COS Slow", "Moves Y SIN Slow", "Moves Y SIN Free", "Random Turning", "Jump If Player Is Above", "Transformation Timer (B)", "Falls If Switch 1 Is Pressed (B)", "Falls If Switch 2 Is Pressed (B)", "Falls If Switch 3 Is Pressed (B)", "Moves Down If Switch 1 Is Pressed", "Moves Up If Switch 1 Is Pressed", "Moves Right If Switch 1 Is Pressed", "Moves Left If Switch 1 Is Pressed", "Moves Down If Switch 2 Is Pressed", "Moves Up If Switch 2 Is Pressed", "Moves Right If Switch 2 Is Pressed", "Moves Left If Switch 2 Is Pressed", "Moves Down If Switch 3 Is Pressed", "Moves Up If Switch 3 Is Pressed", "Moves Right If Switch 3 Is Pressed", "Moves Left If Switch 3 Is Pressed", "Turns Vertically From Obstacle", "Random Vertical Starting Direction", "Starting Direction Towards Player", "Climber", "Climber Type 2", "Runs Away From Player If Sees Player", "Reborn (B)", "Arrow Left", "Arrow Right", "Arrow Up", "Arrow Down", "Move to Arrows Direction", "Background Sprite Moon", "Background Sprite Moves to Left", "Background Sprite Moves to Right", "Add Time to Clock", "Make Player Invisible", "Follow the Player Vertic. and Horiz.", "Follow the Player Vertic. and Horiz., if Player is in Front", "Random Move Vertic. and Horiz.", "Frog Jump 1", "Frog Jump 2", "Frog Jump 3", "Attack 2 if Damaged", "Attack 1 Non Stop", "Attack 2 Non Stop", "Turn if Damaged", "Evil One", "Info 1", "Info 2", "Info 3", "Info 4", "Info 5", "Info 6", "Info 7", "Info 8", "Info 9", "Info 10", "Info 11", "Info 12", "Info 13", "Info 14", "Info 15", "Info 16", "Info 17", "Info 18", "Info 19"}));
 		comboBoxAi8.setEditable(true);
 		comboBoxAi8.setBounds(381, 259, 287, 20);
 		panel_5.add(comboBoxAi8);
 		
 		comboBoxAi7 = new JComboBox();
-		comboBoxAi7.setModel(new DefaultComboBoxModel(new String[] {"No AI", "Chicken", "An Egg", "Baby Chicken", "Bonus (B)", "Jumper", "Basic AI (B)", "Turn horizontally", "Looks Out for Cliffs", "Random Horizontal Change of Direction", "Random Jumping", "Follow the Player", "Random Horizontal Change of Direction", "Follow the Player if Player is in Front", "Transformation If Energy Below 2 (P)", "Transformation If Energy above 1 (P)", "Start Directions Towards Player", "Ammonition", "Non Stop", "Attack 1 If Damaged", "Self Destruction", "Attack 1 If Player is in Front", "Attack 1 If Player is Below", "Damaged by Water (P)", "Attack 2 If Player is in Front", "Kill 'em all", "Affected by Friction", "Hide", "Return to Start Position X", "Return to Start Position Y", "Teleport", "Throwable Weapon", "Falls When Shaken (B)", "Change Trap Stones If KO'ed", "Change Trap Stones If Damaged", "Self Destructs With Mother Sprite", "Moves X COS", "Moves Y COS", "Moves X SIN", "Moves Y SIN", "Moves X COS Fast", "Moves Y SIN Fast", "Moves X COS Slow", "Moves Y SIN Slow", "Moves Y SIN Free", "Random Turning", "Jump If Player Is Above", "Transformation Timer (B)", "Falls If Switch 1 Is Pressed (B)", "Falls If Switch 2 Is Pressed (B)", "Falls If Switch 3 Is Pressed (B)", "Moves Down  If Switch 1 Is Pressed", "Moves Up    If Switch 1 Is Pressed", "Moves Right If Switch 1 Is Pressed", "Moves Left  If Switch 1 Is Pressed", "Moves Down  If Switch 2 Is Pressed", "Moves Up    If Switch 2 Is Pressed", "Moves Right If Switch 2 Is Pressed", "Moves Left  If Switch 2 Is Pressed", "Moves Down  If Switch 3 Is Pressed", "Moves Up    If Switch 3 Is Pressed", "Moves Right If Switch 3 Is Pressed", "Moves Left  If Switch 3 Is Pressed", "Turns Vertically From Obstacle", "Random Vertical Starting Direction", "Starting Direction Towards Player", "Climber", "Climber Type 2", "Runs Away From Player If Sees Player", "Reborn (B)", "Arrow Left", "Arrow Right", "Arrow Up", "Arrow Down", "Move to Arrows Direction", "Background Sprite Moon", "Background Sprite Moves to Left", "Background Sprite Moves to Right", "Add Time to Clock", "Make Player Invisible", "Follow the Player Vertic. and Horiz.", "Follow the Player Vertic. and Horiz., if Player is in Front", "Random Move Vertic. and Horiz.", "Frog Jump 1", "Frog Jump 2", "Frog Jump 3", "Attack 2 if Damaged", "Attack 1 Non Stop", "Attack 2 Non Stop", "Turn if Damaged", "Evil One", "Info 1", "Info 2", "Info 3", "Info 4", "Info 5", "Info 6", "Info 7", "Info 8", "Info 9", "Info 10", "Info 11", "Info 12", "Info 13", "Info 14", "Info 15", "Info 16", "Info 17", "Info 18", "Info 19"}));
+		comboBoxAi7.setModel(new DefaultComboBoxModel(new String[] {"No AI", "Chicken", "An Egg", "Baby Chicken", "Bonus (B)", "Jumper", "Basic AI (B)", "Turn horizontally", "Looks Out for Cliffs", "Random Horizontal Change of Direction", "Random Jumping", "Follow the Player", "Random Horizontal Change of Direction", "Follow the Player if Player is in Front", "Transformation If Energy Below 2 (P)", "Transformation If Energy above 1 (P)", "Start Directions Towards Player", "Ammonition", "Non Stop", "Attack 1 If Damaged", "Self Destruction", "Attack 1 If Player is in Front", "Attack 1 If Player is Below", "Damaged by Water (P)", "Attack 2 If Player is in Front", "Kill 'em all", "Affected by Friction", "Hide", "Return to Start Position X", "Return to Start Position Y", "Teleport", "Throwable Weapon", "Falls When Shaken (B)", "Change Trap Stones If KO'ed", "Change Trap Stones If Damaged", "Self Destructs With Mother Sprite", "Moves X COS", "Moves Y COS", "Moves X SIN", "Moves Y SIN", "Moves X COS Fast", "Moves Y SIN Fast", "Moves X COS Slow", "Moves Y SIN Slow", "Moves Y SIN Free", "Random Turning", "Jump If Player Is Above", "Transformation Timer (B)", "Falls If Switch 1 Is Pressed (B)", "Falls If Switch 2 Is Pressed (B)", "Falls If Switch 3 Is Pressed (B)", "Moves Down If Switch 1 Is Pressed", "Moves Up If Switch 1 Is Pressed", "Moves Right If Switch 1 Is Pressed", "Moves Left If Switch 1 Is Pressed", "Moves Down If Switch 2 Is Pressed", "Moves Up If Switch 2 Is Pressed", "Moves Right If Switch 2 Is Pressed", "Moves Left If Switch 2 Is Pressed", "Moves Down If Switch 3 Is Pressed", "Moves Up If Switch 3 Is Pressed", "Moves Right If Switch 3 Is Pressed", "Moves Left If Switch 3 Is Pressed", "Turns Vertically From Obstacle", "Random Vertical Starting Direction", "Starting Direction Towards Player", "Climber", "Climber Type 2", "Runs Away From Player If Sees Player", "Reborn (B)", "Arrow Left", "Arrow Right", "Arrow Up", "Arrow Down", "Move to Arrows Direction", "Background Sprite Moon", "Background Sprite Moves to Left", "Background Sprite Moves to Right", "Add Time to Clock", "Make Player Invisible", "Follow the Player Vertic. and Horiz.", "Follow the Player Vertic. and Horiz., if Player is in Front", "Random Move Vertic. and Horiz.", "Frog Jump 1", "Frog Jump 2", "Frog Jump 3", "Attack 2 if Damaged", "Attack 1 Non Stop", "Attack 2 Non Stop", "Turn if Damaged", "Evil One", "Info 1", "Info 2", "Info 3", "Info 4", "Info 5", "Info 6", "Info 7", "Info 8", "Info 9", "Info 10", "Info 11", "Info 12", "Info 13", "Info 14", "Info 15", "Info 16", "Info 17", "Info 18", "Info 19"}));
 		comboBoxAi7.setEditable(true);
 		comboBoxAi7.setBounds(381, 228, 287, 20);
 		panel_5.add(comboBoxAi7);
 		
 		comboBoxAi6 = new JComboBox();
-		comboBoxAi6.setModel(new DefaultComboBoxModel(new String[] {"No AI", "Chicken", "An Egg", "Baby Chicken", "Bonus (B)", "Jumper", "Basic AI (B)", "Turn horizontally", "Looks Out for Cliffs", "Random Horizontal Change of Direction", "Random Jumping", "Follow the Player", "Random Horizontal Change of Direction", "Follow the Player if Player is in Front", "Transformation If Energy Below 2 (P)", "Transformation If Energy above 1 (P)", "Start Directions Towards Player", "Ammonition", "Non Stop", "Attack 1 If Damaged", "Self Destruction", "Attack 1 If Player is in Front", "Attack 1 If Player is Below", "Damaged by Water (P)", "Attack 2 If Player is in Front", "Kill 'em all", "Affected by Friction", "Hide", "Return to Start Position X", "Return to Start Position Y", "Teleport", "Throwable Weapon", "Falls When Shaken (B)", "Change Trap Stones If KO'ed", "Change Trap Stones If Damaged", "Self Destructs With Mother Sprite", "Moves X COS", "Moves Y COS", "Moves X SIN", "Moves Y SIN", "Moves X COS Fast", "Moves Y SIN Fast", "Moves X COS Slow", "Moves Y SIN Slow", "Moves Y SIN Free", "Random Turning", "Jump If Player Is Above", "Transformation Timer (B)", "Falls If Switch 1 Is Pressed (B)", "Falls If Switch 2 Is Pressed (B)", "Falls If Switch 3 Is Pressed (B)", "Moves Down  If Switch 1 Is Pressed", "Moves Up    If Switch 1 Is Pressed", "Moves Right If Switch 1 Is Pressed", "Moves Left  If Switch 1 Is Pressed", "Moves Down  If Switch 2 Is Pressed", "Moves Up    If Switch 2 Is Pressed", "Moves Right If Switch 2 Is Pressed", "Moves Left  If Switch 2 Is Pressed", "Moves Down  If Switch 3 Is Pressed", "Moves Up    If Switch 3 Is Pressed", "Moves Right If Switch 3 Is Pressed", "Moves Left  If Switch 3 Is Pressed", "Turns Vertically From Obstacle", "Random Vertical Starting Direction", "Starting Direction Towards Player", "Climber", "Climber Type 2", "Runs Away From Player If Sees Player", "Reborn (B)", "Arrow Left", "Arrow Right", "Arrow Up", "Arrow Down", "Move to Arrows Direction", "Background Sprite Moon", "Background Sprite Moves to Left", "Background Sprite Moves to Right", "Add Time to Clock", "Make Player Invisible", "Follow the Player Vertic. and Horiz.", "Follow the Player Vertic. and Horiz., if Player is in Front", "Random Move Vertic. and Horiz.", "Frog Jump 1", "Frog Jump 2", "Frog Jump 3", "Attack 2 if Damaged", "Attack 1 Non Stop", "Attack 2 Non Stop", "Turn if Damaged", "Evil One", "Info 1", "Info 2", "Info 3", "Info 4", "Info 5", "Info 6", "Info 7", "Info 8", "Info 9", "Info 10", "Info 11", "Info 12", "Info 13", "Info 14", "Info 15", "Info 16", "Info 17", "Info 18", "Info 19"}));
+		comboBoxAi6.setModel(new DefaultComboBoxModel(new String[] {"No AI", "Chicken", "An Egg", "Baby Chicken", "Bonus (B)", "Jumper", "Basic AI (B)", "Turn horizontally", "Looks Out for Cliffs", "Random Horizontal Change of Direction", "Random Jumping", "Follow the Player", "Random Horizontal Change of Direction", "Follow the Player if Player is in Front", "Transformation If Energy Below 2 (P)", "Transformation If Energy above 1 (P)", "Start Directions Towards Player", "Ammonition", "Non Stop", "Attack 1 If Damaged", "Self Destruction", "Attack 1 If Player is in Front", "Attack 1 If Player is Below", "Damaged by Water (P)", "Attack 2 If Player is in Front", "Kill 'em all", "Affected by Friction", "Hide", "Return to Start Position X", "Return to Start Position Y", "Teleport", "Throwable Weapon", "Falls When Shaken (B)", "Change Trap Stones If KO'ed", "Change Trap Stones If Damaged", "Self Destructs With Mother Sprite", "Moves X COS", "Moves Y COS", "Moves X SIN", "Moves Y SIN", "Moves X COS Fast", "Moves Y SIN Fast", "Moves X COS Slow", "Moves Y SIN Slow", "Moves Y SIN Free", "Random Turning", "Jump If Player Is Above", "Transformation Timer (B)", "Falls If Switch 1 Is Pressed (B)", "Falls If Switch 2 Is Pressed (B)", "Falls If Switch 3 Is Pressed (B)", "Moves Down If Switch 1 Is Pressed", "Moves Up If Switch 1 Is Pressed", "Moves Right If Switch 1 Is Pressed", "Moves Left If Switch 1 Is Pressed", "Moves Down If Switch 2 Is Pressed", "Moves Up If Switch 2 Is Pressed", "Moves Right If Switch 2 Is Pressed", "Moves Left If Switch 2 Is Pressed", "Moves Down If Switch 3 Is Pressed", "Moves Up If Switch 3 Is Pressed", "Moves Right If Switch 3 Is Pressed", "Moves Left If Switch 3 Is Pressed", "Turns Vertically From Obstacle", "Random Vertical Starting Direction", "Starting Direction Towards Player", "Climber", "Climber Type 2", "Runs Away From Player If Sees Player", "Reborn (B)", "Arrow Left", "Arrow Right", "Arrow Up", "Arrow Down", "Move to Arrows Direction", "Background Sprite Moon", "Background Sprite Moves to Left", "Background Sprite Moves to Right", "Add Time to Clock", "Make Player Invisible", "Follow the Player Vertic. and Horiz.", "Follow the Player Vertic. and Horiz., if Player is in Front", "Random Move Vertic. and Horiz.", "Frog Jump 1", "Frog Jump 2", "Frog Jump 3", "Attack 2 if Damaged", "Attack 1 Non Stop", "Attack 2 Non Stop", "Turn if Damaged", "Evil One", "Info 1", "Info 2", "Info 3", "Info 4", "Info 5", "Info 6", "Info 7", "Info 8", "Info 9", "Info 10", "Info 11", "Info 12", "Info 13", "Info 14", "Info 15", "Info 16", "Info 17", "Info 18", "Info 19"}));
 		comboBoxAi6.setEditable(true);
 		comboBoxAi6.setBounds(381, 197, 287, 20);
 		panel_5.add(comboBoxAi6);
@@ -1615,14 +1682,41 @@ public class PekaSEFrame extends JFrame {
 				int res = fc.showOpenDialog(null);
 				
 				if (res == JFileChooser.APPROVE_OPTION) {
-					textFieldBonusSprite.setText(fc.getSelectedFile().getParentFile().getName() + "\\" + fc.getSelectedFile().getName());
-					
-					lastSpritePath = fc.getSelectedFile().getParentFile();
+					if (fc.getSelectedFile().getName().length() < 100) {
+						textFieldBonusSprite.setText(fc.getSelectedFile().getParentFile().getName() + "\\" + fc.getSelectedFile().getName());
+						
+						lastSpritePath = fc.getSelectedFile().getParentFile();
+					} else {
+						JOptionPane.showMessageDialog(null, "Sprite file name, including '.spr', can't exceed 100 characters.", "File name too long", JOptionPane.ERROR_MESSAGE);
+					}
 				}
 			}
 		});
 		button_8.setBounds(337, 78, 89, 23);
 		panel_5.add(button_8);
+		
+		JLabel lblTransformValue = new JLabel("Transform value:");
+		lblTransformValue.setBounds(157, 119, 82, 14);
+		panel_5.add(lblTransformValue);
+		
+		JSpinner spinner_4 = new JSpinner();
+		spinner_4.setBounds(249, 116, 52, 20);
+		panel_5.add(spinner_4);
+		
+		JPanel panel_7 = new JPanel();
+		tabbedPane.addTab("More", null, panel_7, null);
+		panel_7.setLayout(null);
+		
+		JLabel lblMessage = new JLabel("Message:");
+		lblMessage.setBounds(37, 11, 46, 14);
+		panel_7.add(lblMessage);
+		
+		JScrollPane scrollPane = new JScrollPane();
+		scrollPane.setBounds(37, 36, 600, 183);
+		panel_7.add(scrollPane);
+		
+		JTextArea textArea = new JTextArea();
+		scrollPane.setViewportView(textArea);
 		
 		JPanel panel_6 = new JPanel();
 		contentPane.add(panel_6, BorderLayout.SOUTH);
@@ -1654,8 +1748,12 @@ public class PekaSEFrame extends JFrame {
 
 			if (ft.exists()) {
 				pstr = new File(spriteFile.ImageFileStr).getParentFile().getName() + "\\" + cleanString(spriteFile.imageFile);
+				
+				rawFile = new File(Settings.BASE_PATH + "\\" + pstr);
 			} else {
 				pstr = "sprites\\" + cleanString(spriteFile.imageFile);
+				
+				rawFile = new File(Settings.BASE_PATH + "\\" + cleanString(spriteFile.imageFile));
 			}
 
 			textField.setText(pstr);
@@ -1856,7 +1954,7 @@ public class PekaSEFrame extends JFrame {
 				} else if (spriteFile.AI[i] >= 35 && spriteFile.AI[i] <= 40) { 
 					cbAni.get(i).setSelectedIndex(spriteFile.AI[i] - 4);
 				} else if (spriteFile.AI[i] >= 41 && spriteFile.AI[i] <= 67) { 
-					cbAni.get(i).setSelectedIndex(spriteFile.AI[i] - 5);
+					cbAni.get(i).setSelectedIndex(spriteFile.AI[i] - 4);
 				} else if (spriteFile.AI[i] >= 70 && spriteFile.AI[i] <= 81) {
 					cbAni.get(i).setSelectedIndex(spriteFile.AI[i] - 7);
 				} else if (spriteFile.AI[i] == 101) {
@@ -2139,9 +2237,11 @@ public class PekaSEFrame extends JFrame {
 			for (int j = 0; j < spriteFile.soundFiles[0].length; j++) {
 				spriteFile.soundFiles[i][j] = 0xCC;
 			}
+			
+			spriteFile.soundFiles[i][0] = 0x0;
 		}
 		
-		for (int i = 0; i < 7; i++) {
+		for (int i = 0; i < 5; i++) {
 			if (i < txtSnd.size()) {
 				tmp1 = txtSnd.get(i).getText().split("\\\\");
 				tmp2 = tmp1[tmp1.length - 1];

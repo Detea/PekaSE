@@ -347,6 +347,10 @@ public class PK2Sprite {
 		
 		boolean ok = false;
 		
+		if (file == null) {
+			return false;
+		}
+		
 		try {
 			if (file.exists()) {
 				file.delete();
