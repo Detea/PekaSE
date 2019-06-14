@@ -15,10 +15,8 @@ public class Settings {
 	public static String DEFAULT_BACKGROUND = "CASTLE.bmp";
 	public static String DEFAULT_MUSIC = "song01.xm";
 
-	public static boolean loadEpisodeOnStartup = false;
-	public static boolean startInEnhancedMode = false;
+	public static boolean use14 = false;
 	
-	// Using File.separatorChar so that this program is platform independent
 	public static void setPaths() {
 		EPISODES_PATH = BASE_PATH + File.separatorChar + "episodes" + File.separatorChar;
 		TILES_PATH = BASE_PATH  + File.separatorChar + "gfx" + File.separatorChar + "tiles" + File.separatorChar;

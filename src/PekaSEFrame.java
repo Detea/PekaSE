@@ -9,7 +9,9 @@ import java.awt.event.ItemListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
+import java.io.DataOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -18,7 +20,6 @@ import java.util.Arrays;
 import java.util.Calendar;
 
 import javax.imageio.ImageIO;
-import javax.print.attribute.standard.JobMessageFromOperator;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
@@ -28,6 +29,7 @@ import javax.sound.sampled.UnsupportedAudioFileException;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
+import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
@@ -37,9 +39,11 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
 import javax.swing.JSpinner;
 import javax.swing.JTabbedPane;
+import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.UIManager;
@@ -48,15 +52,6 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.filechooser.FileFilter;
-import java.awt.event.FocusAdapter;
-import java.awt.event.FocusEvent;
-import java.awt.event.InputMethodListener;
-import java.awt.event.InputMethodEvent;
-import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeEvent;
-import java.awt.Dimension;
-import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
 
 public class PekaSEFrame extends JFrame {
 
@@ -131,6 +126,8 @@ public class PekaSEFrame extends JFrame {
 	private JCheckBox chckbxAtk1Loop;
 	private JCheckBox chckbxAtk2Loop;
 	
+	private JTabbedPane tabbedPane;
+	
 	private BufferedImage test;
 	int i = 0;
 	boolean animate = false, loop = false;
@@ -139,6 +136,12 @@ public class PekaSEFrame extends JFrame {
 	
 	private int sprScaleHeight, sprScaleWidth;
 	private int sprScaleHeight2, sprScaleWidth2;
+	
+	private JSpinner spinner_4, spinner_5;
+	private JPanel panel_7;
+	
+	private JTextArea textArea;
+	private JCheckBox chckbxCollidingWithPlayer, chckbxShotByPlayer;
 	
 	public PekaSEFrame() {
 		try {
@@ -210,12 +213,12 @@ public class PekaSEFrame extends JFrame {
 
 					@Override
 					public boolean accept(File f) {
-						return f.isDirectory() || f.getName().endsWith("spr");
+						return f.isDirectory() || f.getName().endsWith("spr") || (Settings.use14 && f.getName().endsWith("cespr"));
 					}
 
 					@Override
 					public String getDescription() {
-						return "Pekka Kana 2 Sprite file (*.spr)";
+						return "Pekka Kana 2 Sprite file (*.spr | *.cespr)";
 					}
 					
 				});
@@ -225,18 +228,20 @@ public class PekaSEFrame extends JFrame {
 				if (res == JFileChooser.APPROVE_OPTION) {
 					currentFile = fc.getSelectedFile();
 					
-					if (!currentFile.getName().endsWith(".spr")) {
-						currentFile = new File(currentFile.getAbsolutePath() + ".spr");
+					if (!currentFile.getName().endsWith("spr")) {
+						currentFile = new File(fc.getSelectedFile().getAbsolutePath() + ".spr");
 					}
 					
 					lastSpritePath = fc.getSelectedFile().getParentFile();
 					
 					PK2Sprite sp = new PK2Sprite(currentFile);
 					
-					if (sp.checkVersion()) {
+					int v = sp.checkVersion();
+					
+					if (v == 3 || v == 4) {
 						loadFile();
 					} else {
-						JOptionPane.showMessageDialog(null, "Only sprites version 1.3 supported!", "Wrong sprite version", JOptionPane.OK_OPTION);
+						JOptionPane.showMessageDialog(null, "Only sprites version 1.3 or 1.4 supported!", "Wrong sprite version", JOptionPane.OK_OPTION);
 					}
 					
 					panel_3.repaint();
@@ -257,12 +262,12 @@ public class PekaSEFrame extends JFrame {
 
 						@Override
 						public boolean accept(File f) {
-							return f.isDirectory() | f.getName().endsWith("spr");
+							return f.isDirectory() || f.getName().endsWith("spr")  || (Settings.use14 && f.getName().endsWith("cespr"));
 						}
 
 						@Override
 						public String getDescription() {
-							return "Pekka Kana 2 Sprite file (*.spr)";
+							return "Pekka Kana 2 Sprite file (*.spr | *.cespr)";
 						}
 						
 					});
@@ -275,8 +280,14 @@ public class PekaSEFrame extends JFrame {
 					if (res == JFileChooser.APPROVE_OPTION) {
 						File f = fc.getSelectedFile();
 						
-						if (!f.getName().endsWith("spr")) {
-							f = new File(fc.getSelectedFile().getAbsolutePath() + ".spr");
+						if (!Settings.use14) {
+							if (!f.getName().endsWith("spr")) {
+								f = new File(fc.getSelectedFile().getAbsolutePath() + ".spr");
+							}
+						} else {
+							if (!f.getName().endsWith("cespr")) {
+								f = new File(fc.getSelectedFile().getAbsolutePath() + ".cespr");
+							}
 						}
 						
 						
@@ -311,12 +322,12 @@ public class PekaSEFrame extends JFrame {
 
 					@Override
 					public boolean accept(File f) {
-						return f.isDirectory() | f.getName().endsWith("spr");
+						return f.isDirectory() || f.getName().endsWith("spr") || f.getName().endsWith("cespr");
 					}
 
 					@Override
 					public String getDescription() {
-						return "Pekka Kana 2 Sprite file (*.spr)";
+						return "Pekka Kana 2 Sprite file (*.spr | *.cespr)";
 					}
 					
 				});
@@ -329,11 +340,17 @@ public class PekaSEFrame extends JFrame {
 				if (res == JFileChooser.APPROVE_OPTION) {
 					File f = fc.getSelectedFile();
 					
-					if (!f.getName().endsWith("spr")) {
-						f = new File(fc.getSelectedFile().getAbsolutePath() + ".spr");
+					if (!Settings.use14) {
+						if (!f.getName().endsWith("spr")) {
+							f = new File(fc.getSelectedFile().getAbsolutePath() + ".spr");
+						}
+					} else {
+						if (!f.getName().endsWith("cespr")) {
+							f = new File(fc.getSelectedFile().getAbsolutePath() + ".cespr");
+						}
 					}
 					
-					if (f.getName().length() < 13) {
+					if (f.getName().length() < 13 || Settings.use14) {
 						if (saveFile(f)) {
 							setFrameTitle("PekaSE - " + currentFile.getAbsolutePath());
 							
@@ -354,12 +371,81 @@ public class PekaSEFrame extends JFrame {
 		mnFile.add(miSave);
 		mnFile.add(mntmSaveAs);
 		
+		JMenu mnRules = new JMenu("Sprite version");
+		menuBar.add(mnRules);
+		
+		JCheckBoxMenuItem menuItem_1 = new JCheckBoxMenuItem("1.4");
+		JCheckBoxMenuItem menuItem = new JCheckBoxMenuItem("1.3");
+		menuItem.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				Settings.use14 = false;
+				
+				menuItem_1.setSelected(false);
+				
+				spinner_4.setEnabled(false);
+				tabbedPane.remove(4);
+				
+				File f2 = new File("PekaSE.paths");
+				
+				try {
+					if (f2.exists()) {
+						f2.delete();
+					}
+					
+					DataOutputStream dos = new DataOutputStream(new FileOutputStream("PekaSE.paths"));
+					
+					dos.writeUTF(Settings.BASE_PATH);
+					dos.writeBoolean(Settings.use14);
+					
+					dos.flush();
+					dos.close();
+				} catch (IOException e1) {
+					JOptionPane.showMessageDialog(null, "Couldn't create settings file.\n" + e1.getMessage(), "Error", JOptionPane.OK_OPTION);
+					
+					e1.printStackTrace();
+				}
+			}
+		});
+		
+		menuItem_1.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				Settings.use14 = true;
+				
+				menuItem.setSelected(false);
+				tabbedPane.addTab("More", null, panel_7, null);
+				spinner_4.setEnabled(true);
+				
+				File f2 = new File("PekaSE.paths");
+				
+				try {
+					if (f2.exists()) {
+						f2.delete();
+					}
+
+					DataOutputStream dos = new DataOutputStream(new FileOutputStream("PekaSE.paths"));
+					
+					dos.writeUTF(Settings.BASE_PATH);
+					dos.writeBoolean(Settings.use14);
+					
+					dos.flush();
+					dos.close();
+				} catch (IOException e1) {
+					JOptionPane.showMessageDialog(null, "Couldn't create settings file.\n" + e1.getMessage(), "Error", JOptionPane.OK_OPTION);
+					
+					e1.printStackTrace();
+				}
+			}
+		});
+		
+		mnRules.add(menuItem);
+		mnRules.add(menuItem_1);
+		
 		contentPane = new JPanel();
 		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
 		contentPane.setLayout(new BorderLayout(0, 0));
 		setContentPane(contentPane);
 		
-		JTabbedPane tabbedPane = new JTabbedPane(JTabbedPane.TOP);
+		tabbedPane = new JTabbedPane(JTabbedPane.TOP);
 		contentPane.add(tabbedPane, BorderLayout.CENTER);
 		
 		JPanel panel = new JPanel();
@@ -1698,11 +1784,11 @@ public class PekaSEFrame extends JFrame {
 		lblTransformValue.setBounds(157, 119, 82, 14);
 		panel_5.add(lblTransformValue);
 		
-		JSpinner spinner_4 = new JSpinner();
+		spinner_4 = new JSpinner();
 		spinner_4.setBounds(249, 116, 52, 20);
 		panel_5.add(spinner_4);
 		
-		JPanel panel_7 = new JPanel();
+		panel_7 = new JPanel();
 		tabbedPane.addTab("More", null, panel_7, null);
 		panel_7.setLayout(null);
 		
@@ -1714,8 +1800,29 @@ public class PekaSEFrame extends JFrame {
 		scrollPane.setBounds(37, 36, 600, 183);
 		panel_7.add(scrollPane);
 		
-		JTextArea textArea = new JTextArea();
+		textArea = new JTextArea();
 		scrollPane.setViewportView(textArea);
+		
+		JLabel lblDurationframes = new JLabel("Duration:");
+		lblDurationframes.setBounds(37, 235, 46, 14);
+		panel_7.add(lblDurationframes);
+		
+		spinner_5 = new JSpinner();
+		spinner_5.setModel(new SpinnerNumberModel(new Integer(700), new Integer(0), null, new Integer(1)));
+		spinner_5.setBounds(92, 232, 64, 20);
+		panel_7.add(spinner_5);
+		
+		JLabel lblShowMessageWhen = new JLabel("Show message when:");
+		lblShowMessageWhen.setBounds(37, 260, 119, 14);
+		panel_7.add(lblShowMessageWhen);
+		
+		chckbxCollidingWithPlayer = new JCheckBox("Colliding with player");
+		chckbxCollidingWithPlayer.setBounds(37, 282, 131, 23);
+		panel_7.add(chckbxCollidingWithPlayer);
+		
+		chckbxShotByPlayer = new JCheckBox("Shot by player");
+		chckbxShotByPlayer.setBounds(37, 307, 97, 23);
+		panel_7.add(chckbxShotByPlayer);
 		
 		JPanel panel_6 = new JPanel();
 		contentPane.add(panel_6, BorderLayout.SOUTH);
@@ -1723,6 +1830,12 @@ public class PekaSEFrame extends JFrame {
 		
 		lblStatus = new JLabel("Created a new file!");
 		panel_6.add(lblStatus);
+		
+		if (Settings.use14) {
+			menuItem_1.setSelected(true);
+		} else {
+			menuItem.setSelected(true);
+		}
 		
 		Image img = null;
 		try {
@@ -1794,7 +1907,7 @@ public class PekaSEFrame extends JFrame {
 
 			String st = "";
 
-			if (spriteFile.atkSprite1[0] != 0) {
+			if (spriteFile.atkSprite1.length > 0) {
 				if (new File(currentFile.getParentFile().getAbsolutePath() + "\\" + cleanString(spriteFile.atkSprite1)).exists()) {
 					st = currentFile.getParentFile().getName() + "\\" + cleanString(spriteFile.atkSprite1);
 				} else {
@@ -1806,7 +1919,7 @@ public class PekaSEFrame extends JFrame {
 
 			st = "";
 
-			if (spriteFile.atkSprite2[0] != 0) {
+			if (spriteFile.atkSprite2.length > 0) {
 				if (new File(currentFile.getParentFile().getAbsolutePath() + "\\" + cleanString(spriteFile.atkSprite2)).exists()) {
 					st = currentFile.getParentFile().getName() + "\\" + cleanString(spriteFile.atkSprite2);
 				} else {
@@ -1897,7 +2010,7 @@ public class PekaSEFrame extends JFrame {
 
 			st = "";
 
-			if (spriteFile.transformationSprite[0] != 0) {
+			if (spriteFile.transformationSprite.length > 0) {
 				if (new File(currentFile.getParentFile().getAbsolutePath() + "\\" + cleanString(spriteFile.transformationSprite)).exists()) {
 					st = currentFile.getParentFile().getName() + "\\" + cleanString(spriteFile.transformationSprite);
 				} else {
@@ -1909,7 +2022,7 @@ public class PekaSEFrame extends JFrame {
 
 			st = "";
 
-			if (spriteFile.bonusSprite[0] != 0) {
+			if (spriteFile.bonusSprite.length > 0) {
 				if (new File(currentFile.getParentFile().getAbsolutePath() + "\\" + cleanString(spriteFile.bonusSprite)).exists()) {
 					st = currentFile.getParentFile().getName() + "\\" + cleanString(spriteFile.bonusSprite);
 				} else {
@@ -2040,6 +2153,16 @@ public class PekaSEFrame extends JFrame {
 
 			test = spriteFile.frameList[0];
 
+			if (Settings.use14) {
+				textArea.setText(spriteFile.message);
+				
+				spinner_4.setValue(spriteFile.transformationValue);
+				spinner_5.setValue(spriteFile.message_duration);
+				
+				chckbxShotByPlayer.setSelected(spriteFile.showWhenShot);
+				chckbxCollidingWithPlayer.setSelected(spriteFile.showOnCollision);
+			}
+			
 			float fsprScaleHeight = (spriteFile.image.getHeight() / 130f) * 65;
 			float fsprScaleWidth = (spriteFile.image.getWidth() / 130f) * 65;
 
@@ -2429,7 +2552,20 @@ public class PekaSEFrame extends JFrame {
 		} else {
 			spriteFile.destruction = comboBoxDestruct2.getSelectedIndex();
 		}
-
+		
+		try {
+			spinner_4.commitEdit();
+			spinner_5.commitEdit();
+		} catch (ParseException e) {
+			e.printStackTrace();
+		}
+		
+		spriteFile.message = textArea.getText();
+		spriteFile.transformationValue = (int) spinner_4.getValue();
+		spriteFile.message_duration = (int) spinner_5.getValue();
+		spriteFile.showWhenShot = chckbxShotByPlayer.isSelected();
+		spriteFile.showOnCollision = chckbxCollidingWithPlayer.isSelected();
+		
 		boolean ok = spriteFile.saveFile(file);
 
 		currentFile = file;
@@ -2598,7 +2734,7 @@ public class PekaSEFrame extends JFrame {
 		
 		try {
 			int i = 0;
-			while (array[i] != 0x0) {
+			while (i < array.length && array[i] != 0x0) {
 				sb.append(array[i]);
 				
 				i++;

@@ -125,7 +125,8 @@ public class SetPathDialog extends JDialog {
 								DataOutputStream dos = new DataOutputStream(new FileOutputStream("PekaSE.paths"));
 								
 								dos.writeUTF(Settings.BASE_PATH);
-							
+								dos.writeBoolean(Settings.use14);
+								
 								dos.flush();
 								dos.close();
 								
@@ -134,7 +135,7 @@ public class SetPathDialog extends JDialog {
 								
 								new PekaSEFrame().setVisible(true);
 							} catch (IOException e1) {
-								JOptionPane.showMessageDialog(null, "Could'nt create settings file.\n" + e1.getMessage(), "Error", JOptionPane.OK_OPTION);
+								JOptionPane.showMessageDialog(null, "Couldn't create settings file.\n" + e1.getMessage(), "Error", JOptionPane.OK_OPTION);
 								
 								e1.printStackTrace();
 							}
