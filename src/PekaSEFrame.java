@@ -1907,7 +1907,7 @@ public class PekaSEFrame extends JFrame {
 
 			String st = "";
 
-			if (spriteFile.atkSprite1.length > 0) {
+			if (spriteFile.atkSprite1.length > 0 && spriteFile.atkSprite1[0] != 0) {
 				if (new File(currentFile.getParentFile().getAbsolutePath() + "\\" + cleanString(spriteFile.atkSprite1)).exists()) {
 					st = currentFile.getParentFile().getName() + "\\" + cleanString(spriteFile.atkSprite1);
 				} else {
@@ -1919,7 +1919,7 @@ public class PekaSEFrame extends JFrame {
 
 			st = "";
 
-			if (spriteFile.atkSprite2.length > 0) {
+			if (spriteFile.atkSprite2.length > 0 && spriteFile.atkSprite2[0] != 0) {
 				if (new File(currentFile.getParentFile().getAbsolutePath() + "\\" + cleanString(spriteFile.atkSprite2)).exists()) {
 					st = currentFile.getParentFile().getName() + "\\" + cleanString(spriteFile.atkSprite2);
 				} else {
@@ -2010,7 +2010,7 @@ public class PekaSEFrame extends JFrame {
 
 			st = "";
 
-			if (spriteFile.transformationSprite.length > 0) {
+			if (spriteFile.transformationSprite.length > 0 && spriteFile.transformationSprite[0] != 0) {
 				if (new File(currentFile.getParentFile().getAbsolutePath() + "\\" + cleanString(spriteFile.transformationSprite)).exists()) {
 					st = currentFile.getParentFile().getName() + "\\" + cleanString(spriteFile.transformationSprite);
 				} else {
@@ -2022,7 +2022,7 @@ public class PekaSEFrame extends JFrame {
 
 			st = "";
 
-			if (spriteFile.bonusSprite.length > 0) {
+			if (spriteFile.bonusSprite.length > 0 && spriteFile.bonusSprite[0] != 0) {
 				if (new File(currentFile.getParentFile().getAbsolutePath() + "\\" + cleanString(spriteFile.bonusSprite)).exists()) {
 					st = currentFile.getParentFile().getName() + "\\" + cleanString(spriteFile.bonusSprite);
 				} else {
