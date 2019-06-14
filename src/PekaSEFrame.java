@@ -137,7 +137,7 @@ public class PekaSEFrame extends JFrame {
 	private int sprScaleHeight, sprScaleWidth;
 	private int sprScaleHeight2, sprScaleWidth2;
 	
-	private JSpinner spinner_4, spinner_5;
+	private JSpinner spinner_4, spinner_5, spinner_6;
 	private JPanel panel_7;
 	
 	private JTextArea textArea;
@@ -1824,6 +1824,14 @@ public class PekaSEFrame extends JFrame {
 		chckbxShotByPlayer.setBounds(37, 307, 97, 23);
 		panel_7.add(chckbxShotByPlayer);
 		
+		JLabel lblAttackPriority = new JLabel("Attack priority:");
+		lblAttackPriority.setBounds(550, 235, 87, 14);
+		panel_7.add(lblAttackPriority);
+		
+		spinner_6 = new JSpinner();
+		spinner_6.setBounds(560, 257, 66, 20);
+		panel_7.add(spinner_6);
+		
 		JPanel panel_6 = new JPanel();
 		contentPane.add(panel_6, BorderLayout.SOUTH);
 		panel_6.setLayout(new BorderLayout(0, 0));
@@ -2158,6 +2166,7 @@ public class PekaSEFrame extends JFrame {
 				
 				spinner_4.setValue(spriteFile.transformationValue);
 				spinner_5.setValue(spriteFile.message_duration);
+				spinner_6.setValue(spriteFile.attackPriority);
 				
 				chckbxShotByPlayer.setSelected(spriteFile.showWhenShot);
 				chckbxCollidingWithPlayer.setSelected(spriteFile.showOnCollision);
@@ -2556,6 +2565,7 @@ public class PekaSEFrame extends JFrame {
 		try {
 			spinner_4.commitEdit();
 			spinner_5.commitEdit();
+			spinner_6.commitEdit();
 		} catch (ParseException e) {
 			e.printStackTrace();
 		}
@@ -2565,6 +2575,7 @@ public class PekaSEFrame extends JFrame {
 		spriteFile.message_duration = (int) spinner_5.getValue();
 		spriteFile.showWhenShot = chckbxShotByPlayer.isSelected();
 		spriteFile.showOnCollision = chckbxCollidingWithPlayer.isSelected();
+		spriteFile.attackPriority = (int) spinner_6.getValue();
 		
 		boolean ok = spriteFile.saveFile(file);
 

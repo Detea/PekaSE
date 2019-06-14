@@ -99,11 +99,14 @@ public class PK2Sprite {
 	
 	// version 1.4
 	public String message = "";
+	
 	public int message_duration = 0;
+	
 	public boolean showWhenShot = false;
 	public boolean showOnCollision = false;
 	
 	public int transformationValue = 0;
+	public int attackPriority = 0;
 	
 	public PK2Sprite(File file) {
 		filename = file;
@@ -336,7 +339,8 @@ public class PK2Sprite {
 		showWhenShot = dis.readBoolean();
 		showOnCollision = dis.readBoolean();
 		transformationValue = Integer.reverseBytes(dis.readInt());
-
+		attackPriority = Integer.reverseBytes(dis.readInt());
+		
 		return ok;
 	}
 	
@@ -740,6 +744,7 @@ public class PK2Sprite {
 		dis.writeBoolean(showWhenShot);
 		dis.writeBoolean(showOnCollision);
 		dis.writeInt(Integer.reverseBytes(transformationValue));
+		dis.writeInt(Integer.reverseBytes(attackPriority));
 		
 		dis.flush();
 		dis.close();
