@@ -90,6 +90,23 @@ public class PekaSEFrame extends JFrame {
 	Calendar cal;
 	SimpleDateFormat sdf;
 	
+	private int[] aiTable = {
+			0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+			11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+			21, 22, 23, 24, 25, 26, 27, 28, 29, 30,
+			35, 36, 37, 38, 39,
+			41, 42, 43, 44, 45, 46, 47, 48, 49, 50,
+			51, 52, 53, 54, 55, 56, 57, 58, 59, 60,
+			61, 62, 63, 64, 65, 66, 67, 70,	
+			71, 72, 73, 74, 75, 76, 77, 78, 79, 80,
+			81,
+			101, 102, 103,
+			120, 121,
+			130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140,
+			201, 202, 203, 204, 205, 206, 207, 208, 209, 210,
+			211, 212, 213, 214, 215, 216, 217, 218, 219
+	};
+	
 	private JTextField textFieldSndKnockOut;
 	private JTextField textFieldSndDmg;
 	private JTextField textFieldSndAtk1;
@@ -372,7 +389,7 @@ public class PekaSEFrame extends JFrame {
 		mnFile.add(mntmSaveAs);
 		
 		JMenu mnRules = new JMenu("Sprite version");
-		menuBar.add(mnRules);
+		//menuBar.add(mnRules);
 		
 		JCheckBoxMenuItem menuItem_1 = new JCheckBoxMenuItem("1.4");
 		JCheckBoxMenuItem menuItem = new JCheckBoxMenuItem("1.3");
@@ -438,7 +455,7 @@ public class PekaSEFrame extends JFrame {
 		});
 		
 		mnRules.add(menuItem);
-		mnRules.add(menuItem_1);
+		//mnRules.add(menuItem_1);
 		
 		contentPane = new JPanel();
 		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
@@ -967,7 +984,7 @@ public class PekaSEFrame extends JFrame {
 		JButton btnJumpDown = new JButton("Jump down");
 		btnJumpDown.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				playAnimation(4);
+				playAnimation(2);
 			}
 		});
 		btnJumpDown.setBounds(231, 37, 89, 23);
@@ -976,7 +993,7 @@ public class PekaSEFrame extends JFrame {
 		JButton btnDuck = new JButton("Duck");
 		btnDuck.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				playAnimation(2);
+				playAnimation(4);
 			}
 		});
 		btnDuck.setBounds(132, 67, 89, 23);
@@ -1789,7 +1806,7 @@ public class PekaSEFrame extends JFrame {
 		panel_5.add(spinner_4);
 		
 		panel_7 = new JPanel();
-		tabbedPane.addTab("More", null, panel_7, null);
+		//tabbedPane.addTab("More", null, panel_7, null);
 		panel_7.setLayout(null);
 		
 		JLabel lblMessage = new JLabel("Message:");
@@ -2069,12 +2086,21 @@ public class PekaSEFrame extends JFrame {
 			cbAni.add(comboBoxAi10);
 
 			for (int i = 0; i < spriteFile.AI.length; i++) {
+				for (int j = 0; j < aiTable.length; j++) {
+					if (spriteFile.AI[i] == aiTable[j]) {
+						cbAni.get(i).setSelectedIndex(j);
+					}
+				}
+			}
+			
+			/*
+			for (int i = 0; i < spriteFile.AI.length; i++) {
 				if (spriteFile.AI[i] <= 30) {
 					cbAni.get(i).setSelectedIndex(spriteFile.AI[i]);
 				} else if (spriteFile.AI[i] >= 35 && spriteFile.AI[i] <= 40) { 
 					cbAni.get(i).setSelectedIndex(spriteFile.AI[i] - 4);
 				} else if (spriteFile.AI[i] >= 41 && spriteFile.AI[i] <= 67) { 
-					cbAni.get(i).setSelectedIndex(spriteFile.AI[i] - 4);
+					cbAni.get(i).setSelectedIndex(spriteFile.AI[i] - 3);
 				} else if (spriteFile.AI[i] >= 70 && spriteFile.AI[i] <= 81) {
 					cbAni.get(i).setSelectedIndex(spriteFile.AI[i] - 7);
 				} else if (spriteFile.AI[i] == 101) {
@@ -2148,7 +2174,7 @@ public class PekaSEFrame extends JFrame {
 				} else if (spriteFile.AI[i] == 219) {
 					cbAni.get(i).setSelectedIndex(109);
 				}
-			}
+			}*/
 
 			if (spriteFile.destruction >= 100) {
 				comboBoxDestruction.setSelectedIndex(1);
@@ -2257,6 +2283,10 @@ public class PekaSEFrame extends JFrame {
 			spriteFile.imageFile[i] = tmp2.charAt(i);
 		}
 		
+		if (Settings.use14) {
+			spriteFile.imageFile[tmp2.length() + 1] = 0x0;
+		}
+		
 		try {
 			spinner.commitEdit();
 			spinner_1.commitEdit();
@@ -2280,6 +2310,7 @@ public class PekaSEFrame extends JFrame {
 			spinnerParaFactor.commitEdit();
 			spinnerSndFrq.commitEdit();
 			spinnerBonus.commitEdit();
+			
 		} catch (ParseException e) {
 			e.printStackTrace();
 		}
@@ -2297,13 +2328,15 @@ public class PekaSEFrame extends JFrame {
 		
 		int len = 32;
 		
-		if (txtFieldName.getText().length() < 32) {
+		if (txtFieldName.getText().length() < 32 || Settings.use14) {
 			len = txtFieldName.getText().length();
 		}
 		
 		for (int i = 0; i < len; i++) {
 			spriteFile.name[i] = txtFieldName.getText().charAt(i);
 		}
+		
+		spriteFile.name[len + 1] = 0x0;
 		
 		spriteFile.atkSprite1 = new char[100];
 		
@@ -2313,6 +2346,8 @@ public class PekaSEFrame extends JFrame {
 			spriteFile.atkSprite1[i] = tmp2.charAt(i);
 		}
 		
+		spriteFile.atkSprite1[len + 1] = 0;
+		
 		spriteFile.atkSprite2 = new char[100];
 		
 		tmp1 = textFieldAmmoSpr2.getText().split("\\\\");
@@ -2320,6 +2355,8 @@ public class PekaSEFrame extends JFrame {
 		for (int i = 0; i < tmp2.length(); i++) {
 			spriteFile.atkSprite2[i] = tmp2.charAt(i);
 		}
+		
+		spriteFile.atkSprite2[len + 1] = 0;
 		
 		spriteFile.type = comboBoxType.getSelectedIndex() + 1;
 		
@@ -2469,8 +2506,9 @@ public class PekaSEFrame extends JFrame {
 		cbAni.add(comboBoxAi10);
 		
 		for (int i = 0; i < cbAni.size(); i++) {
-			 int in = cbAni.get(i).getSelectedIndex();
-			 
+			spriteFile.AI[i] = aiTable[cbAni.get(i).getSelectedIndex()];
+			
+			 /*
 			 if (in <= 30) {
 				 spriteFile.AI[i] = in;
 			 } else if (in >= 31 && in <= 40) {
@@ -2480,8 +2518,6 @@ public class PekaSEFrame extends JFrame {
 			 } else if (in >= 63 && in <= 75) {
 				 spriteFile.AI[i] = in + 7;
 			 }
-			
-			 // Why no switch?
 			 
 			 if (in == 75) {
 				 spriteFile.AI[i] = 101;
@@ -2553,7 +2589,7 @@ public class PekaSEFrame extends JFrame {
 				 spriteFile.AI[i] = 218;
 			 } else if (in == 109) {
 				 spriteFile.AI[i] = 219;
-			 }
+			 }*/
 		}
 		
 		if (comboBoxDestruction.getSelectedIndex() == 1) {

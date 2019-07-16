@@ -134,6 +134,7 @@ public class PK2Sprite {
 			
 			readAmount(version, dis);
 			
+//			TODO This is NOT the way to do it, this should be fixed in the future.
 			if (version[2] == '3') {
 				ret = 3;
 			} else if (version[2] == '4') {
@@ -192,6 +193,18 @@ public class PK2Sprite {
 		return ok;
 	}
 	
+	private String readString(DataInputStream dis) throws IOException {
+		StringBuilder sb = new StringBuilder();
+		
+		byte len = dis.readByte();
+		
+		for (int i = 0; i < len; i++) {
+			sb.append((char) dis.readByte());
+		}
+		
+		return sb.toString();
+	}
+	
 	private boolean loadVersion14(DataInputStream dis) throws IOException {
 		boolean ok = false;
 		
@@ -201,11 +214,17 @@ public class PK2Sprite {
 			version[i] = (char) dis.readByte();
 		}
 
-		type = Integer.reverseBytes(dis.readInt());
+		type = dis.readByte();
 		
-		int len = Integer.reverseBytes(dis.readInt());
-		imageFile = new char[len];
-		readAmount(imageFile, dis);
+		imageFile = readString(dis).toCharArray();
+		name = readString(dis).toCharArray();
+		
+		frameX = Integer.reverseBytes(dis.readInt());
+		frameY = Integer.reverseBytes(dis.readInt());
+		frameWidth = Integer.reverseBytes(dis.readInt());
+		frameHeight = Integer.reverseBytes(dis.readInt());
+		
+		color = dis.readByte() & 0xFF;
 		
 		for (int i = 0; i < 5; i++) {
 			char[] amount = new char[soundFiles[0].length];
@@ -232,15 +251,6 @@ public class PK2Sprite {
 		
 		animations = (int) (dis.readByte() & 0xFF);
 		frameRate = (int) (dis.readByte() & 0xFF);
-
-		frameX = Integer.reverseBytes(dis.readInt());
-		frameY = Integer.reverseBytes(dis.readInt());
-		frameWidth = Integer.reverseBytes(dis.readInt());
-		frameHeight = Integer.reverseBytes(dis.readInt());
-		
-		len = Integer.reverseBytes(dis.readInt());
-		name = new char[len];
-		readAmount(name, dis);
 		
 		width = Integer.reverseBytes(dis.readInt());
 		height = Integer.reverseBytes(dis.readInt());
@@ -281,8 +291,6 @@ public class PK2Sprite {
 		
 		loadingTime = Integer.reverseBytes(dis.readInt());
 		
-		color = dis.readByte() & 0xFF;
-		
 		obstacle = dis.readBoolean();
 
 		destruction = Integer.reverseBytes(dis.readInt());
@@ -297,22 +305,13 @@ public class PK2Sprite {
 		
 		parallaxFactor = Integer.reverseBytes(dis.readInt());
 		
-		len = Integer.reverseBytes(dis.readInt());
-		transformationSprite = new char[len];
-		readAmount(transformationSprite, dis);
+		transformationSprite = readString(dis).toCharArray();
 		
-		len = Integer.reverseBytes(dis.readInt());
-		bonusSprite = new char[len];
-		readAmount(bonusSprite, dis);
+		bonusSprite = readString(dis).toCharArray();
 
-		len = Integer.reverseBytes(dis.readInt());
-		atkSprite1 = new char[len];
-		readAmount(atkSprite1, dis);
-		
-		len = Integer.reverseBytes(dis.readInt());
-		atkSprite2 = new char[len];
-		readAmount(atkSprite2, dis);
-		
+		atkSprite1 = readString(dis).toCharArray();
+		atkSprite2 = readString(dis).toCharArray();
+				
 		tileCheck = dis.readBoolean();
 		
 		soundFrequency = Integer.reverseBytes(dis.readInt());
@@ -330,10 +329,7 @@ public class PK2Sprite {
 		bonusAlways = dis.readBoolean();
 		swim = dis.readBoolean();
 		
-		len = Integer.reverseBytes(dis.readInt());
-		char[] message = new char[len];
-		readAmount(message, dis);
-		this.message = new String(message);
+		message = readString(dis);
 		
 		message_duration = Integer.reverseBytes(dis.readInt());
 		showWhenShot = dis.readBoolean();
@@ -566,20 +562,20 @@ public class PK2Sprite {
 			dis.writeByte(version[i]);
 		}
 		
-		dis.writeInt(Integer.reverseBytes(type));
+		dis.writeByte(type);
 		
-		int len = 0;
-		for (int i = 0; i < imageFile.length; i++) {
-			if (imageFile[i] != 0) {
-				len++;
-			}
-		}
+		// TODO change ImageFile to string
+		writeString(new String(imageFile), dis);
+		// TODO change name to strings
+		writeString(new String(name), dis);
 		
-		dis.writeInt(Integer.reverseBytes(len));
-		for (int i = 0; i < len; i++) {
-			dis.writeByte(imageFile[i]);
-		}
-
+		dis.writeInt(Integer.reverseBytes(frameX));
+		dis.writeInt(Integer.reverseBytes(frameY));
+		dis.writeInt(Integer.reverseBytes(frameWidth));
+		dis.writeInt(Integer.reverseBytes(frameHeight));
+		
+		dis.writeByte(color);
+		
 		for (int i = 0; i < 5; i++) {
 			for (int j = 0; j < 100; j++) {
 				dis.writeByte(soundFiles[i][j]);
@@ -599,23 +595,6 @@ public class PK2Sprite {
 		
 		dis.writeByte(animations);
 		dis.writeByte(frameRate);
-		
-		dis.writeInt(Integer.reverseBytes(frameX));
-		dis.writeInt(Integer.reverseBytes(frameY));
-		dis.writeInt(Integer.reverseBytes(frameWidth));
-		dis.writeInt(Integer.reverseBytes(frameHeight));
-		
-		len = 0;
-		for (int i = 0; i < name.length; i++) {
-			if (name[i] != 0) {
-				len++;
-			}
-		}
-		
-		dis.writeInt(Integer.reverseBytes(len));
-		for (int i = 0; i < len; i++) {
-			dis.writeByte(name[i]);
-		}
 		
 		dis.writeInt(Integer.reverseBytes(width));
 		dis.writeInt(Integer.reverseBytes(height));
@@ -652,8 +631,6 @@ public class PK2Sprite {
 		
 		dis.writeInt(Integer.reverseBytes(loadingTime));
 		
-		dis.writeByte(color);
-		
 		dis.writeBoolean(obstacle);
 		
 		dis.writeInt(Integer.reverseBytes(destruction));
@@ -668,53 +645,15 @@ public class PK2Sprite {
 		
 		dis.writeInt(Integer.reverseBytes(parallaxFactor));
 		
-		len = 0;
-		for (int i = 0; i < transformationSprite.length; i++) {
-			if (transformationSprite[i] != 0) {
-				len++;
-			}
-		}
-		
-		dis.writeInt(Integer.reverseBytes(len));
-		for (int i = 0; i < len; i++) {
-			dis.writeByte(transformationSprite[i]);
-		}
+		// TODO change to str, blah blah
+		writeString(new String(transformationSprite), dis);
 
-		len = 0;
-		for (int i = 0; i < bonusSprite.length; i++) {
-			if (bonusSprite[i] != 0) {
-				len++;
-			}
-		}
+		// TODO ... string
+		writeString(new String(bonusSprite), dis);
 		
-		dis.writeInt(Integer.reverseBytes(len));
-		for (int i = 0; i < len; i++) {
-			dis.writeByte(bonusSprite[i]);
-		}
-		
-		len = 0;
-		for (int i = 0; i < atkSprite1.length; i++) {
-			if (atkSprite1[i] != 0) {
-				len++;
-			}
-		}
-		
-		dis.writeInt(Integer.reverseBytes(len));
-		for (int i = 0; i < len; i++) {
-			dis.writeByte(atkSprite1[i]);
-		}
-		
-		len = 0;
-		for (int i = 0; i < atkSprite2.length; i++) {
-			if (atkSprite2[i] != 0) {
-				len++;
-			}
-		}
-		
-		dis.writeInt(Integer.reverseBytes(len));
-		for (int i = 0; i < len; i++) {
-			dis.writeByte(atkSprite2[i]);
-		}
+		// TODO ...
+		writeString(new String(atkSprite1), dis);
+		writeString(new String(atkSprite2), dis);		
 
 		dis.writeBoolean(tileCheck);
 		
@@ -733,12 +672,7 @@ public class PK2Sprite {
 		dis.writeBoolean(bonusAlways);
 		dis.writeBoolean(swim);
 
-		len = message.length();
-		dis.writeInt(Integer.reverseBytes(len));
-		
-		for (int i = 0; i < message.length(); i++) {
-			dis.writeByte((byte) message.charAt(i));
-		}
+		writeString(message, dis);
 		
 		dis.writeInt(Integer.reverseBytes(message_duration));
 		dis.writeBoolean(showWhenShot);
@@ -1012,6 +946,14 @@ public class PK2Sprite {
 		ok = true;
 		
 		return ok;
+	}
+	
+	private void writeString(String str, DataOutputStream dos) throws IOException {
+		dos.writeByte(str.length());
+	
+		for (int i = 0; i < str.length(); i++) {
+			dos.writeByte((byte) str.charAt(i));
+		}
 	}
 	
 	private void readAmount(char[] array, DataInputStream dis) throws IOException {
