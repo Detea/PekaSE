@@ -1,3 +1,8 @@
+# This project has been replaced by an improved version PekaSE2
+https://github.com/Detea/PekaSE2
+
+
+
 # PekaSE
 Pekka Kana 2 Sprite Editor
 ---
